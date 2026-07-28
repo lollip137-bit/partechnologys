@@ -1,0 +1,477 @@
+/* ==========================================================
+   PAGE CHROME (every page outside the film) + DELIVERY LIBRARY
+   ========================================================== */
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 200;
+  background: var(--blue); color: #fff;
+  padding: 12px 18px; border-radius: 0 0 10px 0;
+  font-size: 13px; font-weight: 600;
+}
+.skip-link:focus { left: 0; }
+
+/* ---- header ---- */
+.pagebar {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; gap: 22px;
+  padding: 12px 28px;
+  background: rgba(0, 2, 8, 0.72);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-bottom: 1px solid rgba(120, 170, 255, 0.10);
+}
+.pagebar-name {
+  display: flex; flex-direction: column; justify-content: center;
+  padding-left: 13px;
+  font-family: var(--font-sora), sans-serif;
+}
+.pagebar-name .nav-par { font-size: 17px; letter-spacing: 0.2em; }
+.pagebar-name .nav-tech { font-size: 8px; letter-spacing: 0.335em; margin-top: 2px; }
+.pagebar .nav-mark { width: 40px; height: 40px; }
+.pagebar-links {
+  display: flex; align-items: center; gap: 24px;
+  margin-left: auto;
+}
+.pagebar-links a {
+  font-size: 13.5px; font-weight: 400;
+  color: rgba(229, 231, 235, 0.72);
+  text-decoration: none;
+  transition: color 0.3s var(--ease-lux);
+}
+.pagebar-links a:hover { color: #fff; }
+.page-cta { margin-left: 4px; }
+
+/* ---- back navigation ---- */
+.pageback {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 15px 9px 12px;
+  margin-right: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(229, 231, 235, 0.8);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.3s var(--ease-lux), color 0.3s var(--ease-lux), transform 0.3s var(--ease-lux);
+}
+.pageback:hover { border-color: rgba(0, 194, 255, 0.5); color: #fff; transform: translateX(-2px); }
+
+/* the film page: an escape hatch once the reader is past the experience */
+.backdock {
+  position: fixed; right: 20px; bottom: 22px; z-index: 60;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  opacity: 0; transform: translateY(14px);
+  pointer-events: none;
+  transition: opacity 0.5s var(--ease-lux), transform 0.5s var(--ease-lux);
+}
+.backdock.on { opacity: 1; transform: none; pointer-events: auto; }
+.backdock-btn {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 194, 255, 0.28);
+  background: rgba(5, 11, 26, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #dbeaff;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 18px 44px rgba(0, 1, 4, 0.6);
+  transition: border-color 0.3s var(--ease-lux), transform 0.3s var(--ease-lux), background 0.3s;
+}
+.backdock-btn:hover { border-color: rgba(0, 194, 255, 0.7); transform: translateY(-2px); }
+.backdock-btn.ghost {
+  background: rgba(5, 11, 26, 0.6);
+  border-color: rgba(120, 170, 255, 0.16);
+  color: rgba(229, 231, 235, 0.68);
+  font-size: 10px;
+}
+
+.drawer-replay {
+  font-size: 14px !important;
+  color: var(--cyan) !important;
+  opacity: 0.9;
+}
+
+/* ---- shared section helpers ---- */
+.lib-cta-row { margin-top: 52px; display: flex; justify-content: center; }
+.lib-bridge {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 40px; flex-wrap: wrap;
+  border: 1px solid rgba(120, 170, 255, 0.14);
+  border-radius: 22px;
+  padding: 40px;
+  background:
+    radial-gradient(120% 160% at 100% 0%, rgba(37, 99, 235, 0.16), transparent 60%),
+    rgba(255, 255, 255, 0.018);
+}
+.lib-bridge .sec-title { margin-bottom: 12px; }
+.lib-bridge .library-sub { margin: 0; max-width: 640px; }
+
+/* ==========================================================
+   DELIVERED — real screenshots in a browser frame
+   ========================================================== */
+.dgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(430px, 1fr));
+  gap: 34px;
+  margin-top: 46px;
+}
+.dcard {
+  display: flex; flex-direction: column;
+  border: 1px solid rgba(120, 170, 255, 0.13);
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.45s var(--ease-lux), transform 0.45s var(--ease-lux), box-shadow 0.45s var(--ease-lux);
+}
+.dcard:hover {
+  border-color: rgba(120, 170, 255, 0.32);
+  transform: translateY(-4px);
+  box-shadow: 0 30px 70px -40px rgba(37, 99, 235, 0.7);
+}
+.dcard-frame {
+  display: block; position: relative;
+  width: 100%; padding: 0; border: 0;
+  background: #05070f;
+  cursor: zoom-in;
+  text-align: left;
+}
+.dcard-frame .pwin-bar { display: flex; }
+.dcard-shot {
+  display: block; position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+}
+.dcard-shot .cardreel { filter: saturate(0.94); transition: filter 0.6s var(--ease-lux); }
+.dcard:hover .dcard-shot .cardreel { filter: saturate(1.06); }
+.dcard-zoom {
+  position: absolute; left: 50%; bottom: 16px;
+  transform: translateX(-50%) translateY(8px);
+  padding: 9px 18px; border-radius: 999px;
+  background: rgba(4, 10, 24, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(140, 190, 255, 0.28);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #dbeaff;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-lux), transform 0.4s var(--ease-lux);
+  pointer-events: none;
+}
+.dcard:hover .dcard-zoom { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.dcard-meta { padding: 24px 26px 28px; }
+.dcard-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.dcard-status {
+  margin-left: auto;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.25);
+  color: rgba(229, 231, 235, 0.7);
+}
+.dcard-status.s-live {
+  color: #6ff3c0;
+  border-color: rgba(80, 240, 190, 0.35);
+  background: rgba(60, 230, 175, 0.08);
+}
+.dcard-name {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+  color: #f2f8ff;
+  margin-bottom: 10px;
+}
+.dcard-line {
+  font-size: 14px; font-weight: 300; line-height: 1.68;
+  color: var(--muted);
+}
+.dcard-points {
+  list-style: none;
+  margin: 18px 0 0;
+  display: grid; gap: 7px;
+}
+.dcard-points li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13px; font-weight: 300;
+  color: rgba(229, 231, 235, 0.72);
+}
+.dcard-points li::before {
+  content: ''; position: absolute; left: 0; top: 7px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 194, 255, 0.8);
+}
+.dcard-stack { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
+.dcard-chip {
+  font-size: 10.5px; letter-spacing: 0.06em;
+  padding: 6px 11px; border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.16);
+  color: rgba(229, 231, 235, 0.62);
+}
+.dcard-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 22px;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--cyan); text-decoration: none;
+  transition: gap 0.3s var(--ease-lux);
+}
+.dcard-link:hover { gap: 14px; }
+
+/* ==========================================================
+   MOCKUPS — the saved concepts
+   ========================================================== */
+.mgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 26px;
+  margin-top: 46px;
+}
+.mcard {
+  display: flex; flex-direction: column;
+  border: 1px solid rgba(120, 170, 255, 0.12);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.016);
+  transition: border-color 0.45s var(--ease-lux), transform 0.45s var(--ease-lux);
+}
+.mcard.is-clickable { cursor: zoom-in; }
+.mcard:hover { border-color: rgba(120, 170, 255, 0.3); transform: translateY(-3px); }
+.mcard-art {
+  position: relative;
+  aspect-ratio: 8 / 5;
+  background: #000104;
+  overflow: hidden;
+}
+/* the concept posters get the same bloom the film has */
+.concept-art { filter: drop-shadow(0 0 3px rgba(61, 157, 255, 0.55)) saturate(1.1); }
+.mcard-art .concept-art {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: top center;
+  display: block;
+}
+.mcard-no {
+  position: absolute; top: 12px; left: 14px;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.22em;
+  color: rgba(210, 232, 255, 0.75);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+}
+.mcard-meta { padding: 20px 20px 24px; display: flex; flex-direction: column; flex: 1; }
+.mcard-family {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.3em;
+  color: rgba(0, 194, 255, 0.75);
+  margin-bottom: 10px;
+}
+.mcard-name {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 16.5px; font-weight: 700; line-height: 1.28;
+  color: #f2f8ff;
+  margin-bottom: 9px;
+}
+.mcard-line {
+  font-size: 13px; font-weight: 300; line-height: 1.62;
+  color: var(--muted);
+  flex: 1;
+}
+.mcard-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.mcard-tag {
+  font-size: 10px; letter-spacing: 0.05em;
+  padding: 5px 9px; border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.14);
+  color: rgba(229, 231, 235, 0.55);
+}
+
+/* ==========================================================
+   FULL-SIZE PREVIEW
+   ========================================================== */
+@keyframes shot-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shot-rise { from { transform: translateY(26px) scale(0.985); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---- card preview: the reel itself, so hover is continuous motion ---- */
+.cardreel {
+  position: absolute; left: 0; right: 0; top: 0;
+  width: 100%; height: 109%;
+  object-fit: cover; object-position: top center;
+  display: block;
+  pointer-events: none;
+  -webkit-user-select: none; user-select: none;
+}
+
+.dcard-play, .mcard-play {
+  font-size: 9px;
+  color: var(--cyan);
+}
+.mcard-play {
+  position: absolute; right: 12px; bottom: 12px;
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 194, 255, 0.35);
+  background: rgba(4, 10, 24, 0.7);
+  backdrop-filter: blur(8px);
+  font-size: 10px;
+  opacity: 0; transform: translateY(6px);
+  transition: opacity 0.35s var(--ease-lux), transform 0.35s var(--ease-lux);
+}
+.mcard:hover .mcard-play { opacity: 1; transform: none; }
+
+/* ==========================================================
+   INDUSTRY PHOTOGRAPHY — real sector imagery, graded to brand
+   The photo lives BEHIND the copy: desaturated to the one blue,
+   darkened hard, and only warming toward the brand on hover.
+   ========================================================== */
+.ind-card.has-photo { min-height: 214px; justify-content: flex-end; }
+.ind-photo {
+  position: absolute; inset: 0; z-index: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.ind-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: grayscale(0.82) brightness(0.92) contrast(1.06);
+  opacity: 1;
+  transform: scale(1.04);
+  transition: transform 1.1s var(--ease-lux), filter 0.6s var(--ease-lux);
+}
+/* a blue wash for identity + a bottom ramp so the copy always has contrast */
+.ind-photo::after {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(2, 6, 18, 0.05) 0%, rgba(2, 6, 18, 0.55) 52%, rgba(1, 4, 12, 0.94) 100%),
+    linear-gradient(135deg, rgba(15, 55, 150, 0.42), rgba(0, 110, 210, 0.24));
+}
+.ind-card.has-photo:hover .ind-photo img {
+  transform: scale(1.1);
+  filter: grayscale(0.3) brightness(1) contrast(1.04);
+}
+/* the copy has to sit above the photo, always */
+.ind-card.has-photo .ind-num,
+.ind-card.has-photo .ind-name,
+.ind-card.has-photo .ind-line,
+.ind-card.has-photo .ind-arrow { position: relative; z-index: 2; }
+.ind-card.has-photo .ind-name { text-shadow: 0 2px 16px rgba(0, 3, 12, 0.9); }
+.ind-card.has-photo .ind-line { color: rgba(229, 231, 235, 0.72); text-shadow: 0 1px 12px rgba(0, 3, 12, 0.9); }
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+/* ==========================================================
+   PHONES: LET THE WORLD THROUGH
+   The copy panel was a near-opaque full-width slab covering most of the
+   screen, so on a phone the particle film was simply invisible. The panel
+   now sits lower, reads as glass rather than a card, and every element
+   inside it is tightened so the object keeps the upper half of the frame.
+   ========================================================== */
+@media (max-width: 900px) {
+  .act { padding: 0 4vw 11vh; }
+  .act-panel {
+    padding: 18px 18px 20px;
+    border-radius: 20px;
+    background: linear-gradient(160deg, rgba(5, 11, 26, 0.74), rgba(5, 11, 26, 0.36));
+    border-color: rgba(0, 194, 255, 0.2);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    box-shadow: 0 24px 70px rgba(0, 1, 4, 0.6);
+  }
+  .act-title { font-size: clamp(23px, 6.6vw, 31px); line-height: 1.06; }
+  .act-line { font-size: 12.5px; line-height: 1.52; margin-top: 10px; }
+  .act-rule { margin-bottom: 14px; }
+  .act-kicker { margin-bottom: 12px; }
+  /* capabilities become a compact wrapping row instead of a tall grid */
+  .act-caps { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .act-cap {
+    font-size: 9.5px; letter-spacing: 0.04em;
+    padding: 5px 9px; border-radius: 999px;
+    border: 1px solid rgba(0, 194, 255, 0.18);
+    background: rgba(0, 194, 255, 0.05);
+  }
+  .act-cap-dot { display: none; }
+  .act-stats { gap: 20px; margin-top: 14px; }
+  .act-cta { margin-top: 16px; }
+
+  /* four product cards stacked one-per-row pushed the grid off screen */
+  .eco { place-items: end center; }
+  .eco-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px; margin: 0 0 12vh; width: 100%;
+  }
+  .eco-card { padding: 14px 14px 16px; border-radius: 16px; }
+  .eco-icon { width: 24px; height: 24px; }
+  .eco-name { font-size: 16px; margin: 6px 0 6px; }
+  .eco-line { font-size: 11px; line-height: 1.42; }
+  .eco-tag { font-size: 8.5px; }
+  .act-center.act-eco { padding-top: 8vh; }
+}
+@media (max-width: 560px) {
+  .act { padding-bottom: 10vh; }
+  .act-caps { display: flex; }
+  .eco-line { display: none; }
+}
+
+/* Over the black film a transparent bar is fine; over the website sections
+   below it the mark used to sit straight on top of a heading. */
+@media (max-width: 900px) {
+  .navbar {
+    background: linear-gradient(180deg, rgba(3, 7, 17, 0.94) 0%, rgba(3, 7, 17, 0.72) 62%, rgba(2, 6, 16, 0) 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .backdock { right: 12px; bottom: 14px; }
+  .backdock-btn { padding: 10px 14px; font-size: 10px; }
+}
+
+/* The 3D-pinned tech logos need a wide frame to read as an orbit. In portrait
+   the copy panel owns the lower half and only one or two stragglers survive at
+   the edges, which looks like a bug rather than a system. */
+@media (max-width: 700px) {
+  .orbit { display: none !important; }
+}
+
+@media (max-width: 900px) {
+  .pagebar { padding: 10px 14px; }
+  .pagebar-links, .page-cta { display: none; }
+  .pagebar .burger { display: block; margin-left: auto; }
+  .pagebar-name { font-size: 12px; }
+  .dgrid { grid-template-columns: 1fr; gap: 24px; }
+  .mgrid { grid-template-columns: 1fr; gap: 18px; }
+  .lib-bridge { padding: 28px 22px; gap: 24px; }
+  .lib-bridge .finale-cta { width: 100%; text-align: center; }
+  .dcard-meta { padding: 20px 18px 24px; }
+  .dcard-name { font-size: 19px; }
+}
+
+
+.livebar .pwin-dot { flex: 0 0 auto; }
+
+/* ---- 404 ---- */
+.notfound { min-height: 100vh; display: grid; place-items: center; text-align: center; }
+.notfound-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12vh 0; }
+.notfound-inner .library-sub { margin: 18px 0 34px; max-width: 520px; }
+.notfound-inner .cta-actions { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; justify-content: center; }
+
+/* ==========================================================
+   REDUCED MOTION
+   The film itself is the product and stays — but everything
+   decorative stops moving, and nothing plays on its own.
+   ========================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* reveal-on-scroll must not leave content invisible when it cannot animate */
+  [data-a] { opacity: 1 !important; transform: none !important; filter: none !important; }
+  .ind-photo img { transform: none !important; }
+  .livehint { display: none; }
+}

@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PAR TECHNOLOGYS — V2
 
-## Getting Started
+The flagship site. One conserved GPU particle system carries the visitor through
+eleven acts and finally assembles the brand mark; the marketing site then scrolls
+up over the finished film.
 
-First, run the development server:
+**Branch:** `par_tech_v2` — self-contained, ready to deploy.
+
+---
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # http://localhost:3010
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```bash
+npm run build && npm start
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`npm run typecheck` runs `tsc --noEmit`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+> **Do not run `npm run build` while `npm run dev` is running.** The build
+> overwrites `.next`, the dev server then 404s on its client chunks, and every
+> page serves un-hydrated HTML — the site renders but nothing is clickable. If
+> that happens: stop dev, delete `.next`, start dev again.
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
+Plain Next.js 15 App Router, fully static (`○ (Static) prerendered` for every
+route). Any Next host works. **No environment variables and no configuration
+are required** — point the host at this branch and attach the domain.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The canonical domain is already `https://partechnologys.com`, hard-set in
+`src/content/seo.ts`. Canonicals, `sitemap.xml`, `robots.txt`, Open Graph and
+the JSON-LD graph all declare it, so nothing needs changing when it goes live.
+Set `NEXT_PUBLIC_SITE_URL` only if a staging host must declare itself instead.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/
+  page.tsx            the film + the marketing site below it
+  layout.tsx          metadata, JSON-LD, fonts
+  sitemap.ts robots.ts
+  <route>/page.tsx    server component: metadata only
+  <route>/Client.tsx  the actual page (client component)
+  library/mockups/    the delivery library
+src/
+  experience/         camera rig, post FX, phase/act script
+  particles/          the GPU simulation, shaders, shape targets
+  ui/                 acts, HUD, nav, sections, library
+  content/            all copy and data — edit here, not in components
+public/library/reels/ landing-page captures shown in the library
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Every act, station, camera key and shape hold lives in
+`src/experience/phases.ts`. That file is the film script.
+
+---
+
+## Two rules that are not obvious
+
+**1. The library shows the DESIGN, never the build.**
+`src/ui/ReelPlayer.tsx` plays a self-hosted capture of each landing page. It is
+deliberately not an `<iframe>` of the real deployment: an iframe publishes the
+client's URL in this site's own page source and hands visitors the whole site to
+click through and inspect. There are no client URLs, no links out and no
+click-through anywhere in the library — please keep it that way.
+
+**2. Brightness comes from density, not exposure.**
+Pushing `uIntensity` past ~4.5 clips the HDR nucleus and ACES tone-maps every
+particle to flat white. If something needs to look brighter, add particles or
+lift the palette — do not raise exposure.
+
+---
+
+## Before this goes on the domain
+
+Content that still needs the business to confirm or replace:
+
+- **`STATS` in `src/content/site.ts`** — "120+ projects shipped", "40+ AI systems
+  in production", "99.9% uptime", "12× ROI". Self-reported figures; confirm them
+  or change them.
+- **`PROJECTS` in `src/content/site.ts`** — these describe *types of systems*,
+  not named client engagements, and carry no client-attributed metrics. If real
+  case studies are cleared for publication, they belong here.
+- **`INSIGHTS`** — three article cards with no articles behind them yet.
+- **Contact form** (`app/contact/Client.tsx`) — composes a `mailto:` to
+  `commission@partechnologys.com` (from `SITE.email`). It captures nothing on
+  its own and fails silently for anyone without a desktop mail client, so wire
+  a real form endpoint when there is one.
