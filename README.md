@@ -32,6 +32,25 @@ Plain Next.js 15 App Router, fully static (`○ (Static) prerendered` for every
 route). Any Next host works. **No environment variables and no configuration
 are required** — point the host at this branch and attach the domain.
 
+### Auto-deploy: push to `main` → live on Hostinger
+
+The workflow is provided at **`docs/hostinger-deploy.yml`**. On every push to
+`main` it SSHes into the Hostinger server, pulls, rebuilds and restarts the app,
+so `git push` is the whole deploy.
+
+**Activate it once (repo owner):**
+1. In GitHub, **Add file → Create new file**, name it exactly
+   `.github/workflows/deploy.yml`, and paste the contents of
+   `docs/hostinger-deploy.yml`. *(Workflow files must be added through GitHub —
+   a normal git push can't create them without `workflow` token scope.)*
+2. Repo → **Settings → Secrets and variables → Actions** → add five secrets:
+   `HOSTINGER_SSH_HOST`, `HOSTINGER_SSH_USER`, `HOSTINGER_SSH_PORT`,
+   `HOSTINGER_SSH_KEY`, `HOSTINGER_APP_PATH`. The header comment in the workflow
+   explains exactly how to get each, including the SSH key and the one-time
+   server-side git clone.
+
+After that, every push to `main` deploys automatically.
+
 The canonical domain is already `https://partechnologys.com`, hard-set in
 `src/content/seo.ts`. Canonicals, `sitemap.xml`, `robots.txt`, Open Graph and
 the JSON-LD graph all declare it, so nothing needs changing when it goes live.
