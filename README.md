@@ -16,7 +16,7 @@ npm run dev        # http://localhost:3010
 ```
 
 ```bash
-npm run build && npm start
+npm run build      # writes a static site to ./out
 ```
 
 `npm run typecheck` runs `tsc --noEmit`.
@@ -28,26 +28,33 @@ npm run build && npm start
 
 ## Deploy
 
-Plain Next.js 15 App Router, fully static (`○ (Static) prerendered` for every
-route). Any Next host works. **No environment variables and no configuration
-are required** — point the host at this branch and attach the domain.
+This is a **static export** (`output: 'export'` in `next.config.mjs`).
+`npm run build` produces a plain `./out` folder of HTML/CSS/JS that any web host
+serves with no Node process — ideal for Hostinger shared/Business hosting.
+Everything (the particle film, the reels) is client-side, so it behaves exactly
+like a served build.
 
 ### Auto-deploy: push to `main` → live on Hostinger
 
 The workflow is provided at **`docs/hostinger-deploy.yml`**. On every push to
-`main` it SSHes into the Hostinger server, pulls, rebuilds and restarts the app,
-so `git push` is the whole deploy.
+`main`, GitHub builds the static site and uploads it to Hostinger over FTP —
+`git push` is the whole deploy, no server to run, no cache to purge.
 
 **Activate it once (repo owner):**
 1. In GitHub, **Add file → Create new file**, name it exactly
    `.github/workflows/deploy.yml`, and paste the contents of
    `docs/hostinger-deploy.yml`. *(Workflow files must be added through GitHub —
    a normal git push can't create them without `workflow` token scope.)*
-2. Repo → **Settings → Secrets and variables → Actions** → add five secrets:
-   `HOSTINGER_SSH_HOST`, `HOSTINGER_SSH_USER`, `HOSTINGER_SSH_PORT`,
-   `HOSTINGER_SSH_KEY`, `HOSTINGER_APP_PATH`. The header comment in the workflow
-   explains exactly how to get each, including the SSH key and the one-time
-   server-side git clone.
+2. Repo → **Settings → Secrets and variables → Actions** → add four secrets from
+   Hostinger hPanel → Files → FTP Accounts: `HOSTINGER_FTP_HOST`,
+   `HOSTINGER_FTP_USER`, `HOSTINGER_FTP_PASSWORD`, `HOSTINGER_FTP_DIR`
+   (usually `/public_html/`).
+3. In Hostinger, make sure the domain serves the files in that folder — on a
+   Business plan that's the default; if a **Node.js app** is set for the domain,
+   remove it so the folder is served as plain files.
+
+Caching is handled by `deploy/.htaccess` (uploaded automatically): HTML always
+revalidates so a deploy shows immediately, build assets cache forever.
 
 After that, every push to `main` deploys automatically.
 

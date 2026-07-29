@@ -1,35 +1,34 @@
 # ============================================================
-#  Push to main  ->  live on Hostinger.
+#  Push to main  ->  live on Hostinger (Business / shared plan).
 #
-#  Every push to `main` runs this. It SSHes into the Hostinger
-#  server, pulls the new code, rebuilds the Next.js app, and
-#  restarts it — so a `git push` is all it takes to update the
-#  live site. No Vercel, the domain never moves.
+#  On every push to `main`, GitHub builds the site to static files
+#  and uploads them to Hostinger over FTP. A `git push` is the
+#  whole deploy — no server to run, no cache to purge.
 #
-#  ONE-TIME SETUP (Ali, in GitHub):
-#    Repo -> Settings -> Secrets and variables -> Actions -> New
-#    repository secret, add these five:
+#  ACTIVATE ONCE (in your GitHub repo):
+#    1. Add file -> Create new file, name it EXACTLY
+#         .github/workflows/deploy.yml
+#       and paste everything in this file.
+#       (Workflow files can't be added by a normal git push without
+#        a `workflow`-scoped token — the web UI adds them fine.)
 #
-#      HOSTINGER_SSH_HOST   your server host/IP        (hPanel -> SSH Access)
-#      HOSTINGER_SSH_USER   your SSH username          (hPanel -> SSH Access)
-#      HOSTINGER_SSH_PORT   your SSH port              (usually 22 or 65002 on Hostinger)
-#      HOSTINGER_SSH_KEY    a private SSH key that can log in     (see note below)
-#      HOSTINGER_APP_PATH   the folder the site runs from on the server
-#                           e.g. /home/uXXXXXXXX/domains/partechnologys.com/app
+#    2. Settings -> Secrets and variables -> Actions -> New repository
+#       secret, add these four. Get them in Hostinger hPanel ->
+#       Files -> FTP Accounts:
 #
-#  SSH key: on the server run `ssh-keygen -t ed25519 -f deploy_key`,
-#  add `deploy_key.pub` to ~/.ssh/authorized_keys, and paste the
-#  PRIVATE `deploy_key` file's contents into HOSTINGER_SSH_KEY.
+#         HOSTINGER_FTP_HOST      e.g. ftp.partechnologys.com  (or the IP shown)
+#         HOSTINGER_FTP_USER      the FTP username
+#         HOSTINGER_FTP_PASSWORD  the FTP password
+#         HOSTINGER_FTP_DIR       where the domain is served from, usually
+#                                 /public_html/  (File Manager shows the path)
 #
-#  The server folder (HOSTINGER_APP_PATH) must be a git clone of THIS
-#  repo whose `origin` is https://github.com/Ali7849/partechnologys.git.
-#  If it isn't yet, one time on the server:
-#     cd <the app folder> && git init && \
-#     git remote add origin https://github.com/Ali7849/partechnologys.git && \
-#     git fetch origin main && git reset --hard origin/main
+#  ONE-TIME HOSTINGER SETUP:
+#    - The domain must serve the static files in HOSTINGER_FTP_DIR. On a
+#      Business plan that is the default (public_html). If a "Node.js app"
+#      is configured for this domain in hPanel, remove it so the folder is
+#      served as plain files.
 #
-#  If your Hostinger plan has NO SSH (managed / Horizons), tell the
-#  team and we'll switch this to the method your plan supports.
+#  After that: edit anything -> git push -> live in ~1-2 minutes.
 # ============================================================
 
 name: Deploy to Hostinger
@@ -37,50 +36,39 @@ name: Deploy to Hostinger
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}      # lets you also trigger a deploy by hand from the Actions tab
+  workflow_dispatch: {}
 
 concurrency:
   group: hostinger-production
-  cancel-in-progress: true   # a newer push supersedes an in-flight deploy
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.HOSTINGER_SSH_HOST }}
-          username: ${{ secrets.HOSTINGER_SSH_USER }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT }}
-          key: ${{ secrets.HOSTINGER_SSH_KEY }}
-          command_timeout: 20m
-          script: |
-            set -e
-            cd "${{ secrets.HOSTINGER_APP_PATH }}"
+          node-version: 20
+          cache: npm
 
-            echo "→ pulling latest main"
-            git fetch origin main
-            git reset --hard origin/main
+      - name: Install
+        run: npm ci
 
-            echo "→ installing dependencies"
-            npm ci
+      - name: Build static site (-> ./out)
+        run: npm run build
 
-            echo "→ building"
-            npm run build
+      - name: Add server config
+        run: cp deploy/.htaccess out/.htaccess
 
-            echo "→ restarting the app"
-            # Uses pm2 (the usual Hostinger Node setup). If the process is not
-            # running yet, it is started. `npm start` = `next start -p 3010`.
-            if command -v pm2 >/dev/null 2>&1; then
-              pm2 reload par-technologys --update-env \
-                || pm2 start npm --name par-technologys -- start
-              pm2 save
-            else
-              echo "pm2 not found — if your app is managed by Hostinger's Node"
-              echo "panel instead, replace this step with its restart command"
-              echo "(or 'touch tmp/restart.txt' for a Passenger setup)."
-              exit 1
-            fi
-
-            echo "✓ deployed"
+      - name: Upload to Hostinger over FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTINGER_FTP_HOST }}
+          username: ${{ secrets.HOSTINGER_FTP_USER }}
+          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          local-dir: ./out/
+          server-dir: ${{ secrets.HOSTINGER_FTP_DIR }}
+          protocol: ftps            # secure FTP; if the host rejects it, change to: ftp
+          # only changed files are uploaded after the first run
