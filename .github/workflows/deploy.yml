@@ -1,0 +1,74 @@
+# ============================================================
+#  Push to main  ->  live on Hostinger (Business / shared plan).
+#
+#  On every push to `main`, GitHub builds the site to static files
+#  and uploads them to Hostinger over FTP. A `git push` is the
+#  whole deploy — no server to run, no cache to purge.
+#
+#  ACTIVATE ONCE (in your GitHub repo):
+#    1. Add file -> Create new file, name it EXACTLY
+#         .github/workflows/deploy.yml
+#       and paste everything in this file.
+#       (Workflow files can't be added by a normal git push without
+#        a `workflow`-scoped token — the web UI adds them fine.)
+#
+#    2. Settings -> Secrets and variables -> Actions -> New repository
+#       secret, add these four. Get them in Hostinger hPanel ->
+#       Files -> FTP Accounts:
+#
+#         HOSTINGER_FTP_HOST      e.g. ftp.partechnologys.com  (or the IP shown)
+#         HOSTINGER_FTP_USER      the FTP username
+#         HOSTINGER_FTP_PASSWORD  the FTP password
+#         HOSTINGER_FTP_DIR       where the domain is served from, usually
+#                                 /public_html/  (File Manager shows the path)
+#
+#  ONE-TIME HOSTINGER SETUP:
+#    - The domain must serve the static files in HOSTINGER_FTP_DIR. On a
+#      Business plan that is the default (public_html). If a "Node.js app"
+#      is configured for this domain in hPanel, remove it so the folder is
+#      served as plain files.
+#
+#  After that: edit anything -> git push -> live in ~1-2 minutes.
+# ============================================================
+
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: hostinger-production
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build static site (-> ./out)
+        run: npm run build
+
+      - name: Add server config
+        run: cp deploy/.htaccess out/.htaccess
+
+      - name: Upload to Hostinger over FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTINGER_FTP_HOST }}
+          username: ${{ secrets.HOSTINGER_FTP_USER }}
+          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          local-dir: ./out/
+          server-dir: ${{ secrets.HOSTINGER_FTP_DIR }}
+          protocol: ftps            # secure FTP; if the host rejects it, change to: ftp
+          # only changed files are uploaded after the first run
