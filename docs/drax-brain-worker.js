@@ -1,38 +1,25 @@
 /**
- * Drax's brain — Gemini, server-side.
+ * Drax's brain — Cloudflare Workers AI (open-source models, genuinely free).
  *
- * Deploy this as a Cloudflare Worker (or adapt as a Vercel function). It is the
- * ONLY place the API key exists. The website calls this; this calls Google.
+ * No API key. No billing. No card on file, ever. This runs entirely on the
+ * free Workers AI allocation (10,000 "Neurons"/day on the Workers Free plan —
+ * roughly 1,300 chat replies or 12,500 embeddings per day) using open-weight
+ * models Cloudflare hosts directly: Meta's Llama for chat, BAAI's bge for
+ * retrieval. Nothing external is called; `env.AI` is a binding, not a fetch.
  *
- * Required environment variables (set them as ENCRYPTED variables in the
- * hosting dashboard — never in the Next.js build):
- *   GEMINI_API_KEY   your key from https://aistudio.google.com/apikey
- *   ALLOWED_ORIGIN   https://partechnologys.com
+ * Model IDs checked against developers.cloudflare.com/workers-ai/models on
+ * 2026-07-30, both current and not deprecated:
+ *   chat:      @cf/meta/llama-3.1-8b-instruct-fp8
+ *   embedding: @cf/baai/bge-base-en-v1.5
  *
- * Model IDs below were checked against
- * https://ai.google.dev/gemini-api/docs/models on 2026-07-30 and were STABLE
- * (not preview) on that date. Google does retire models — if a call starts
- * failing with a 404/400 about the model, re-check that page.
+ * ONE-TIME SETUP in the Cloudflare dashboard (replaces the old GEMINI_API_KEY
+ * step entirely — there is no key to create):
+ *   Worker -> Settings -> Bindings -> Add -> "Workers AI" -> variable name "AI"
+ *   Worker -> Settings -> Variables -> ALLOWED_ORIGIN = https://partechnologys.com
  */
 
-/**
- * Flash tier: fast and cheap, which is what a website assistant wants.
- * `gemini-3.6-flash` balances speed with intelligence — chosen because Drax has
- * to reliably emit the JSON control block at the end of every reply, and the
- * cheaper lite tiers are less dependable at structured output.
- * If cost matters more than polish, `gemini-3.5-flash-lite` is the cheapest
- * stable option; check the control block still parses before keeping it.
- */
-const CHAT_MODEL = "gemini-3.6-flash";
-
-/**
- * Text embeddings for retrieval. `gemini-embedding-001` is stable and
- * text-focused, which is all this needs. (`gemini-embedding-2` is the newer
- * multimodal one — unnecessary here, we only ever embed short text.)
- */
-const EMBED_MODEL = "gemini-embedding-001";
-
-const API = "https://generativelanguage.googleapis.com/v1beta/models";
+const CHAT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
+const EMBED_MODEL = "@cf/baai/bge-base-en-v1.5";
 
 /* ------------------------------------------------------------------ *
  * Knowledge base
@@ -111,12 +98,15 @@ Never look excited while refusing. Never look annoyed at a fair question.
 Use action "point_to_contact" when they want a human, a quote, or you couldn't
 answer.
 
+You MUST end every reply with the control block above, exactly in that
+format, with no text after it. This is not optional.
+
 CONTEXT:
 ${context || "(nothing relevant was found for this question)"}`;
 }
 
 /* ------------------------------------------------------------------ *
- * Retrieval
+ * Retrieval — embeddings via the AI binding, no fetch, no key
  * ------------------------------------------------------------------ */
 function cosine(a, b) {
   let dot = 0,
@@ -130,36 +120,26 @@ function cosine(a, b) {
   return na && nb ? dot / (Math.sqrt(na) * Math.sqrt(nb)) : 0;
 }
 
-async function embed(texts, key) {
-  const res = await fetch(`${API}/${EMBED_MODEL}:batchEmbedContents?key=${key}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      requests: texts.map((t) => ({
-        model: `models/${EMBED_MODEL}`,
-        content: { parts: [{ text: t }] },
-      })),
-    }),
-  });
-  if (!res.ok) throw new Error(`embed ${res.status}`);
-  const j = await res.json();
-  return j.embeddings.map((e) => e.values);
+async function embed(ai, texts) {
+  const res = await ai.run(EMBED_MODEL, { text: texts });
+  // bge returns { shape, data: number[][], pooling } — one vector per input text.
+  return res.data;
 }
 
-// Embeddings for the corpus are computed once per Worker instance and reused.
+// Corpus embeddings are computed once per Worker instance and reused.
 let CORPUS_VECS = null;
 
 /**
- * Similarity floor. Gemini's embeddings are semantic and dense, so unrelated
- * text still scores well above zero — this is deliberately much higher than the
- * lexical floor the in-browser brain uses. TUNE IT: ask five real off-topic
- * questions, log the top score, and set this just above the highest.
+ * Similarity floor. bge's embeddings are semantic and dense, so unrelated text
+ * still scores above zero — this is well above a lexical floor. TUNE IT: ask a
+ * handful of real off-topic questions, log the top score in the Cloudflare
+ * Logs tab, and set this just above the highest one you see.
  */
-const FLOOR = 0.62;
+const FLOOR = 0.6;
 
-async function retrieve(query, key) {
-  if (!CORPUS_VECS) CORPUS_VECS = await embed(KNOWLEDGE.map((k) => k.text), key);
-  const [qv] = await embed([query], key);
+async function retrieve(ai, query) {
+  if (!CORPUS_VECS) CORPUS_VECS = await embed(ai, KNOWLEDGE.map((k) => k.text));
+  const [qv] = await embed(ai, [query]);
   return KNOWLEDGE.map((k, i) => ({ ...k, score: cosine(qv, CORPUS_VECS[i]) }))
     .filter((r) => r.score >= FLOOR)
     .sort((a, b) => b.score - a.score)
@@ -167,7 +147,8 @@ async function retrieve(query, key) {
 }
 
 /* ------------------------------------------------------------------ *
- * Rate limiting — stops this becoming a free Gemini proxy for strangers
+ * Rate limiting — mostly to keep one visitor from burning the shared daily
+ * Neuron allocation; Workers AI has no per-caller key to rate-limit on its own.
  * ------------------------------------------------------------------ */
 const HITS = new Map();
 function rateLimited(id) {
@@ -220,8 +201,10 @@ export default {
       });
     }
 
-    const key = env.GEMINI_API_KEY;
-    if (!key) return new Response("Server not configured", { status: 500, headers: cors });
+    if (!env.AI) {
+      // Missing the Workers AI binding — see the setup comment at the top.
+      return new Response("Server not configured: no AI binding", { status: 500, headers: cors });
+    }
 
     const sse = (o) => `data: ${JSON.stringify(o)}\n\n`;
     const encoder = new TextEncoder();
@@ -230,45 +213,42 @@ export default {
       async start(controller) {
         const send = (o) => controller.enqueue(encoder.encode(sse(o)));
         try {
-          const hits = await retrieve(message, key);
+          const hits = await retrieve(env.AI, message);
           if (hits.length) send({ type: "sources", sources: hits.map((h) => h.source) });
 
-          const contents = [
+          // Llama's chat format is OpenAI-style: role is "system" | "user" |
+          // "assistant". Our WireMessage history mirrors Gemini's "model", so
+          // it's translated here.
+          const messages = [
+            { role: "system", content: systemPrompt(hits.map((h) => h.text).join("\n---\n")) },
             ...history.map((m) => ({
-              role: m.role === "model" ? "model" : "user",
-              parts: [{ text: String(m.content ?? "").slice(0, 2000) }],
+              role: m.role === "model" ? "assistant" : "user",
+              content: String(m.content ?? "").slice(0, 2000),
             })),
-            { role: "user", parts: [{ text: message }] },
+            { role: "user", content: message },
           ];
 
-          const res = await fetch(`${API}/${CHAT_MODEL}:streamGenerateContent?alt=sse&key=${key}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents,
-              systemInstruction: {
-                parts: [{ text: systemPrompt(hits.map((h) => h.text).join("\n---\n")) }],
-              },
-              generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
-            }),
-          });
-
-          if (res.status === 429) {
-            send({ type: "error", message: "rate_limited", fallback: true });
-            send({ type: "done" });
-            controller.close();
-            return;
+          let aiStream;
+          try {
+            aiStream = await env.AI.run(CHAT_MODEL, {
+              messages,
+              stream: true,
+              max_tokens: 600,
+              temperature: 0.4,
+            });
+          } catch (err) {
+            console.error("Workers AI chat call failed:", err?.message ?? err);
+            throw err;
           }
-          if (!res.ok || !res.body) throw new Error(`gemini ${res.status}`);
 
-          // Strip the control block out of the visible text. A holdback keeps a
-          // marker split across two chunks from leaking to the user.
+          // Strip the control block out of the visible text. A holdback keeps
+          // a marker split across two chunks from leaking to the user.
           const OPEN = "<<<CONTROL";
           let full = "";
           let emitted = 0;
           let sawControl = false;
 
-          const reader = res.body.getReader();
+          const reader = aiStream.getReader();
           const decoder = new TextDecoder();
           let buf = "";
 
@@ -289,7 +269,8 @@ export default {
               } catch {
                 continue;
               }
-              const text = chunk?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+              // Workers AI streams { response: "token" } per line.
+              const text = chunk?.response ?? "";
               if (!text) continue;
               full += text;
               if (sawControl) continue;
@@ -311,7 +292,10 @@ export default {
             send({ type: "delta", text: full.slice(emitted) });
           }
 
-          // Parse the control block; fall back to a sane default.
+          // Parse the control block; fall back to a sane default. Open models
+          // are less reliable than Gemini at obeying a format instruction, so
+          // this default matters more here — if it's missing, Drax just
+          // settles to neutral rather than getting stuck mid-expression.
           let control = { mood: "neutral", action: null };
           const m = full.match(/<<<CONTROL\s*(\{[\s\S]*?\})\s*>>>/);
           if (m) {
@@ -331,7 +315,8 @@ export default {
           send({ type: "done" });
         } catch (err) {
           // The site falls back to its built-in brain on error, so Drax keeps
-          // working even when Google doesn't.
+          // working even if Workers AI is temporarily unavailable or the
+          // day's free Neuron allocation is exhausted.
           send({ type: "error", message: String(err?.message ?? err), fallback: true });
         } finally {
           controller.close();
