@@ -635,3 +635,25 @@ a.svc-leaf:hover { border-color: rgba(0, 194, 255, 0.55); color: #fff; transform
   .legal-p, .legal-list { font-size: 14.5px; }
   .footer-legal { font-size: 12px; gap: 8px 10px; }
 }
+
+/* ============ TOUCH TAP TARGETS ============
+   The shared chrome (footer nav, legal row, email links) rendered as ~15px-tall
+   text links on every page — well under the 44px touch guidance, and awkward to
+   hit on a phone. Padding is added only under a touch/narrow query so the
+   desktop composition is unchanged; negative margins keep the rows from growing
+   taller than they need to. */
+@media (max-width: 900px), (pointer: coarse) {
+  .footer-links a,
+  .footer-legal a,
+  .footer-cookie-btn,
+  .finale-replay {
+    display: inline-flex; align-items: center;
+    min-height: 44px;
+    padding: 0 2px;
+  }
+  .footer-links { gap: 4px 18px; margin: -6px 0; }
+  .footer-legal { gap: 2px 12px; margin: -6px 0; }
+  /* the services jump index and service chips are already >=32px, but give them
+     a touch-comfortable floor too */
+  .svc-index-chip, a.svc-leaf { min-height: 38px; display: inline-flex; align-items: center; }
+}

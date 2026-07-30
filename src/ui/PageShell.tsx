@@ -54,7 +54,7 @@ export default function PageShell({ kicker, title, sub, children }: {
 
     // the 3D language carries onto every inner page
     const el = root.current;
-    const SEL = '.svc-card, .ind-card, .quote-card, .eng-card, .ins-card, .pwin, .art-card, .svc-branch, .contact-fact, .flow-dot, .mcard, .dcard';
+    const SEL = '.svc-card, .ind-card, .quote-card, .eng-card, .ins-card, .pwin, .art-card, .svc-branch, .contact-fact, .flow-dot, .mcard, .dcard, .flag-card, .role-card, .proof-card';
     const onMove = (e: MouseEvent) => {
       const card = (e.target as HTMLElement).closest?.(SEL) as HTMLElement | null;
       if (!card) return;

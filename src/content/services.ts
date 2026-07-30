@@ -1,6 +1,10 @@
 // The complete PAR Technologys service catalogue
 export const SERVICE_TREE: { cat: string; blurb: string; items: string[] }[] = [
-  { cat: 'AI Solutions', blurb: 'Agents, models and intelligence woven into your operations.', items: ['AI Chatbots', 'AI Voice Agents', 'AI Customer Support', 'AI Sales Automation', 'AI Business Assistants', 'AI Knowledge Base', 'Machine Learning', 'Predictive Analytics', 'Computer Vision', 'Speech AI', 'Generative AI Solutions', 'AI Consulting', 'AI Integration'] },
+  // 2026 pass: the five entries at the front are the modern production-AI
+  // vocabulary (agentic systems, RAG, evals/guardrails, governance, MCP).
+  // Every original service name is KEPT — they carry SEO and they are the
+  // business's own words; the new entries layer the current framing on top.
+  { cat: 'AI Solutions', blurb: 'Production AI — grounded in your data, governed, observable and cost-controlled.', items: ['AI Agents & Agentic Systems', 'RAG & Knowledge Grounding', 'LLM Evals & Guardrails', 'AI Governance & Auditability', 'MCP Tool Integrations', 'AI Chatbots', 'AI Voice Agents', 'AI Customer Support', 'AI Sales Automation', 'AI Business Assistants', 'AI Knowledge Base', 'Machine Learning', 'Predictive Analytics', 'Computer Vision', 'Speech AI', 'Generative AI Solutions', 'AI Consulting', 'AI Integration'] },
   { cat: 'Software Development', blurb: 'Production-grade systems, engineered to last.', items: ['Custom Software', 'Enterprise Software', 'SaaS Development', 'MVP Development', 'Product Development', 'Legacy Modernization', 'White Label Development', 'Dedicated Development Teams', 'Software Maintenance'] },
   { cat: 'Web Development', blurb: 'Websites and web apps that convert and scale.', items: ['Business Websites', 'Corporate Websites', 'E-Commerce Stores', 'Landing Pages', 'Web Applications', 'CMS Development', 'WordPress Development', 'Shopify Development', 'WooCommerce', 'Headless CMS', 'Website Maintenance'] },
   { cat: 'Mobile App Development', blurb: 'Native and cross-platform apps people keep.', items: ['Android Apps', 'iOS Apps', 'Cross Platform Apps', 'Flutter', 'React Native', 'Enterprise Mobile Apps', 'App Maintenance'] },

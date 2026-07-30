@@ -7,6 +7,7 @@ import './phase6.css';
 import './phase7.css';
 import './library.css';
 import './inner.css';
+import './services.css';
 import { SITE } from '@/content/seo';
 
 const sora = Sora({ subsets: ['latin'], variable: '--font-sora', weight: ['300', '400', '600', '700', '800'], display: 'swap' });
