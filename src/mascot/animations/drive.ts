@@ -51,6 +51,16 @@ export interface Drive {
    */
   offsetY: number;
 
+  /**
+   * Dr. Strange portal open amount, 0 (shut) .. 1 (fully open). Drives the
+   * sparking energy ring Drax steps through when it hides / peeks. Scales its
+   * size, opacity and spark intensity together.
+   */
+  portal: number;
+  /** Portal centre in world units — placed at whichever edge Drax uses. */
+  portalX: number;
+  portalY: number;
+
   /** Chest-logo emissive intensity (idle 1.0 · thinking 2.2 · celebrate 3.0). */
   logoIntensity: number;
   /** Eyes/seam emissive intensity. */
@@ -83,6 +93,9 @@ export function createDrive(): Drive {
     spin: 0,
     offsetX: 0,
     offsetY: 0,
+    portal: 0,
+    portalX: 0,
+    portalY: 0,
     logoIntensity: 1.0,
     accentIntensity: 1.0,
     ringOpacity: 0,

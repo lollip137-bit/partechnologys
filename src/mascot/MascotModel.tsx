@@ -16,6 +16,7 @@ import { createEyeMaterial } from "./eyeMaterial";
 import { createLogoTexture, LOGO_EMISSIVE } from "./logoTexture";
 import { AMBIENT, LOOK_CLAMP, LOOK_LERP, PALETTE } from "./design";
 import { ThinkingRing } from "./ThinkingRing";
+import { Portal } from "./Portal";
 
 // ---- scratch objects: declared ONCE, reused every frame (brief §8) ----------
 const _tmpEuler = new THREE.Euler();
@@ -191,8 +192,12 @@ export function MascotModel() {
 
   // ---- static scene graph (built once) -------------------------------------
   return (
-    <group ref={root} dispose={null}>
-      <group ref={bodyGroup}>
+    <>
+      {/* The portal lives in world space, OUTSIDE Drax's root group, so it
+          stays put at the frame edge while Drax leans through it. */}
+      <Portal drive={drive} />
+      <group ref={root} dispose={null}>
+        <group ref={bodyGroup}>
         {/* Torso — capsule, soft matte shell */}
         <mesh castShadow position={[0, -0.35, 0]}>
           <capsuleGeometry args={[0.42, 0.5, 12, 24]} />
@@ -270,6 +275,7 @@ export function MascotModel() {
 
       {/* Thinking orbiting particle ring (visible only while thinking) */}
       <ThinkingRing drive={drive} />
-    </group>
+      </group>
+    </>
   );
 }

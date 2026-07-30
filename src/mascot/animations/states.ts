@@ -40,6 +40,7 @@ function toRest(tl: gsap.core.Timeline, d: Drive, extra: Partial<Drive> = {}) {
       spin: 0,
       offsetX: 0,
       offsetY: 0,
+      portal: 0,
       logoIntensity: LOGO_INTENSITY.idle,
       accentIntensity: 1.0,
       ringOpacity: 0,
@@ -56,17 +57,55 @@ function toRest(tl: gsap.core.Timeline, d: Drive, extra: Partial<Drive> = {}) {
   return tl;
 }
 
-export const boot: Builder = (d) => {
+/**
+ * Steps OUT of a portal. Shared by the site-load entrance (`boot`) and by
+ * `recall` after Drax has been dismissed — a ring tears open at its home spot,
+ * Drax scales up out of it wide-eyed, and it seals behind. Centred on the
+ * placement (offset 0,0) so it arrives exactly where the launcher sits.
+ */
+function portalEntrance(d: Drive, opts: { delay?: number } = {}): gsap.core.Timeline {
   const tl = gsap.timeline();
-  // one eye opens, then the other, small settle. (Eye stagger handled in shader
-  // via eyeOpen for both; we fake the "one then other" with a quick wide beat.)
-  d.eyeOpen = 0;
-  tl.to(d, { eyeOpen: 1, duration: 0.5, ease: "power2.out", overwrite: "auto" }, 0.15)
-    .to(d, { wide: 0.6, duration: 0.25, ease: "power2.out", overwrite: "auto" }, 0.4)
-    .to(d, { wide: 0, happy: 0.4, duration: 0.4, ease: "power2.out" }, 0.75)
-    .to(d, { happy: 0, scale: 1, logoIntensity: LOGO_INTENSITY.idle, duration: 0.5, ease: "power2.inOut" }, 1.2);
+  const at = opts.delay ?? 0;
+  // start: tucked inside a shut portal at home
+  tl.set(
+    d,
+    {
+      portalX: 0,
+      portalY: 0,
+      portal: 0,
+      offsetX: 0,
+      offsetY: 0,
+      tiltZ: 0,
+      scale: 0.14,
+      eyeOpen: 0,
+      wide: 0,
+      happy: 0,
+      sad: 0,
+      angry: 0,
+      heat: 0,
+      shake: 0,
+    },
+    at,
+  )
+    // portal tears open first
+    .to(d, { portal: 1, duration: 0.42, ease: "back.out(1.9)" }, at)
+    // Drax pops out of it, wide-eyed
+    .to(
+      d,
+      { scale: 1.06, eyeOpen: 1, wide: 0.7, duration: 0.55, ease: "back.out(1.7)" },
+      at + 0.18,
+    )
+    // settle to rest, happy little beat
+    .to(d, { scale: 1, wide: 0, happy: 0.4, duration: 0.4, ease: "power2.out" }, at + 0.7)
+    .to(d, { happy: 0, logoIntensity: LOGO_INTENSITY.idle, duration: 0.5, ease: "power2.inOut" }, at + 1.05)
+    // ring collapses shut behind it
+    .to(d, { portal: 0, duration: 0.42, ease: "power2.in" }, at + 0.62);
   return tl;
-};
+}
+
+export const boot: Builder = (d) => portalEntrance(d);
+
+export const arriving: Builder = (d) => portalEntrance(d);
 
 export const idle: Builder = (d) => toRest(gsap.timeline(), d);
 
@@ -338,6 +377,12 @@ export const peeking: Builder = (d) => {
 
   const holdSeconds = 0.6 + Math.random() * 0.8;
 
+  // The portal hangs at the doorway Drax emerges through — sat where it leans
+  // in, so its body threads the ring. Nudged a touch further toward the edge so
+  // the ring reads as a gateway at the frame border rather than around its waist.
+  const portalX = inX + edge.x * 0.18;
+  const portalY = inY + edge.y * 0.18;
+
   tl.set(d, {
     offsetX: offX,
     offsetY: offY,
@@ -348,17 +393,26 @@ export const peeking: Builder = (d) => {
     angry: 0,
     heat: 0,
     shake: 0,
+    portal: 0,
+    portalX,
+    portalY,
   })
-    // lean in around the corner, whole body
-    .to(d, {
-      offsetX: inX,
-      offsetY: inY,
-      tiltZ: tiltRad,
-      eyeOpen: 1,
-      wide: 1,
-      duration: 0.6,
-      ease: "back.out(1.4)",
-    })
+    // the portal tears open FIRST, before Drax appears through it
+    .to(d, { portal: 1, duration: 0.42, ease: "back.out(1.8)" }, 0)
+    // lean in around the corner, whole body, through the ring
+    .to(
+      d,
+      {
+        offsetX: inX,
+        offsetY: inY,
+        tiltZ: tiltRad,
+        eyeOpen: 1,
+        wide: 1,
+        duration: 0.6,
+        ease: "back.out(1.4)",
+      },
+      0.18,
+    )
     // settle into watching you
     .to(d, { wide: 0.55, happy: 0.5, duration: 0.5, ease: "sine.inOut" })
     .to(d, {}, `+=${holdSeconds}`) // hold the stare, a different length each time
@@ -372,7 +426,9 @@ export const peeking: Builder = (d) => {
       eyeOpen: 0.4,
       duration: 0.5,
       ease: "power2.in",
-    });
+    })
+    // portal collapses shut behind it
+    .to(d, { portal: 0, duration: 0.4, ease: "power2.in" }, "-=0.25");
   return tl;
 };
 
@@ -443,26 +499,38 @@ export const annoyed: Builder = (d) => {
 /** Dismissed: slides off the nearest edge and stays gone until it peeks. */
 export const hiding: Builder = (d, hideDir = 1) => {
   const tl = gsap.timeline();
-  tl.to(d, {
-    // slips out sideways past the frame edge, leaning as it goes
-    offsetX: OFF_X * hideDir,
-    offsetY: 0,
-    tiltZ: (hideDir * 18 * Math.PI) / 180,
-    eyeOpen: 0.45,
-    wide: 0,
-    happy: 0,
-    narrow: 0.3,
-    angry: 0,
-    heat: 0,
-    shake: 0,
-    bob: 0.4,
-    scale: 1,
-    accentIntensity: 0.8,
-    logoIntensity: 0.6,
-    duration: 0.42,
-    ease: "power2.in",
-    overwrite: "auto",
-  });
+  // A portal tears open at the edge Drax is leaving through, sitting just inside
+  // the frame so we watch it slip into the ring rather than simply slide away.
+  tl.set(d, { portalX: hideDir * PEEK_X, portalY: 0, portal: 0 })
+    .to(d, { portal: 1, duration: 0.32, ease: "back.out(1.8)" }, 0)
+    .to(
+      d,
+      {
+        // steps into the ring and shrinks away through it, leaning as it goes
+        offsetX: PEEK_X * hideDir,
+        offsetY: 0,
+        tiltZ: (hideDir * 18 * Math.PI) / 180,
+        eyeOpen: 0.45,
+        wide: 0,
+        happy: 0,
+        narrow: 0.3,
+        angry: 0,
+        heat: 0,
+        shake: 0,
+        bob: 0.4,
+        scale: 0.12, // diminishes into the portal
+        accentIntensity: 0.8,
+        logoIntensity: 0.6,
+        duration: 0.46,
+        ease: "power2.in",
+        overwrite: "auto",
+      },
+      0.14,
+    )
+    // once fully inside, park it off-screen so idle motion never peeks a sliver
+    .set(d, { offsetX: OFF_X * hideDir, scale: 1 })
+    // ring seals shut once it's gone
+    .to(d, { portal: 0, duration: 0.36, ease: "power2.in" }, "-=0.12");
   return tl;
 };
 
@@ -479,6 +547,7 @@ export const BUILDERS: Record<MascotState, Builder> = {
   sleepy,
   asleep,
   peeking,
+  arriving,
   dragging,
   annoyed,
   hiding,

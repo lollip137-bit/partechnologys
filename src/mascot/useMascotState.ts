@@ -21,6 +21,8 @@ export type MascotState =
   | "sleepy"
   | "asleep"
   | "peeking"
+  /** Stepping out of a portal — site load, or when recalled after hiding. */
+  | "arriving"
   /** Held by the user, mid-drag. */
   | "dragging"
   /** Poked, flung, or interrupted — Drax is not happy about it. */
@@ -40,6 +42,7 @@ export const STATE_PRIORITY: Record<MascotState, number> = {
   dragging: 140,
   hiding: 130,
   boot: 120,
+  arriving: 115,
   celebrate: 100,
   annoyed: 95,
   speaking: 90,

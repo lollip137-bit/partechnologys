@@ -161,12 +161,13 @@ export function MascotRoot() {
     startPeekCycle();
   }, [closePanel, hold, startPeekCycle, streaming, getAnnoyed]);
 
-  /** Bring Drax back from behind the edge. */
+  /** Bring Drax back — it steps out of a fresh portal at its home spot. */
   const recall = useCallback(() => {
     clearPeekTimers();
     setDismissed(false);
     hold("dismiss", null);
-  }, [hold, clearPeekTimers]);
+    fire("arriving", 1700);
+  }, [hold, clearPeekTimers, fire]);
 
   useEffect(() => clearPeekTimers, [clearPeekTimers]);
 
