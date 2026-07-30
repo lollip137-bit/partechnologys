@@ -5,6 +5,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { PageBack } from './BackControls';
 import SocialWheel from './Social';
+import CookiePrefs from './CookiePrefs';
+import { SITE } from '@/content/seo';
 
 export const PAGE_LINKS: { href: string; label: string }[] = [
   { href: '/services', label: 'Services' },
@@ -91,6 +93,17 @@ export function PageFooter() {
           <Link href="/">↺ Replay the experience</Link>
         </nav>
         <SocialWheel />
+        <div className="footer-legal">
+          <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+          <span aria-hidden>·</span>
+          <a href={`mailto:${SITE.emailOffice}`}>{SITE.emailOffice}</a>
+          <span aria-hidden>·</span>
+          <Link href="/privacy">Privacy</Link>
+          <span aria-hidden>·</span>
+          <Link href="/terms">Terms</Link>
+          <span aria-hidden>·</span>
+          <CookiePrefs />
+        </div>
         <div className="footer-copy">© {new Date().getFullYear()} PAR Technologys. All rights reserved.</div>
       </div>
     </footer>

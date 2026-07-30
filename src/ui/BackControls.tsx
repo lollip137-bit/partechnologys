@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { subscribe } from '@/state/ticker';
 import { viewport } from '@/state/viewport';
 
@@ -43,24 +43,58 @@ export function FilmBackToTop() {
   );
 }
 
-/** Inner pages: a real back control, plus a way into the film on purpose. */
+/**
+ * Inner pages: a real back control.
+ *
+ * This used to gate on `document.referrer !== ''`, which is empty on a fresh tab
+ * AND on plenty of ordinary in-app navigations — so `canGoBack` was false far
+ * more often than it should have been and the button fell through to
+ * `router.push('/#services-sec')`, dumping the visitor onto the homepage film
+ * instead of taking them back one step. That is the "back button takes us to the
+ * main page" bug.
+ *
+ * The honest signal is how many in-app navigations this tab has made, so we
+ * count them in sessionStorage. If there is somewhere to go back TO, we go
+ * there. If the visitor landed directly on this page (shared link, search
+ * result, new tab) there is no history to pop, so the control becomes an
+ * explicit "Home" instead of pretending to be Back.
+ */
+const DEPTH_KEY = 'par-nav-depth';
+
 export function PageBack() {
   const router = useRouter();
+  const pathname = usePathname();
   const [canGoBack, setCanGoBack] = useState(false);
 
   useEffect(() => {
-    // history.length > 1 alone lies on a fresh tab; this is the honest check
-    setCanGoBack(typeof window !== 'undefined' && window.history.length > 1 && document.referrer !== '');
-  }, []);
+    if (typeof window === 'undefined') return;
+    let depth = Number(sessionStorage.getItem(DEPTH_KEY) ?? '0');
+    // A route change inside the app pushes a history entry we are allowed to pop.
+    // The first page of the session is entry 0 — nothing behind it.
+    depth += 1;
+    sessionStorage.setItem(DEPTH_KEY, String(depth));
+    setCanGoBack(depth > 1 && window.history.length > 1);
+  }, [pathname]);
+
+  const onClick = () => {
+    if (canGoBack) {
+      // stay in step with our own counter, or the next page miscounts
+      const depth = Number(sessionStorage.getItem(DEPTH_KEY) ?? '1');
+      sessionStorage.setItem(DEPTH_KEY, String(Math.max(0, depth - 2)));
+      router.back();
+      return;
+    }
+    router.push('/');
+  };
 
   return (
     <button
       className="pageback"
-      onClick={() => (canGoBack ? router.back() : router.push('/#services-sec'))}
-      aria-label="Go back"
+      onClick={onClick}
+      aria-label={canGoBack ? 'Go back to the previous page' : 'Go to the homepage'}
     >
       <span aria-hidden>←</span>
-      <span className="pageback-text">Back</span>
+      <span className="pageback-text">{canGoBack ? 'Back' : 'Home'}</span>
     </button>
   );
 }

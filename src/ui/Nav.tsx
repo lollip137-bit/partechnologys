@@ -4,51 +4,39 @@
 import { useEffect, useRef, useState } from 'react';
 import { timeline } from '@/state/timeline';
 import { subscribe } from '@/state/ticker';
+import { NAV_SERVICE_COLUMNS, BUSINESS_NEEDS } from '@/content/services';
+import { NAV_INDUSTRY_COLUMNS } from '@/content/site';
 
-const SERVICES: { title: string; items: string[] }[] = [
-  {
-    title: 'AI Solutions',
-    items: ['AI Agents', 'Voice Agents', 'Computer Vision', 'Machine Learning', 'Automation', 'AI Consulting', 'AI Integration'],
-  },
-  {
-    title: 'Software & Digital Engineering',
-    items: ['Custom Software', 'SaaS', 'Web', 'Mobile', 'Enterprise', 'Cloud', 'APIs', 'DevOps'],
-  },
-  {
-    title: 'Growth & Transformation',
-    items: ['SEO', 'GEO', 'AEO', 'Digital Marketing', 'Consulting', 'Managed Services'],
-  },
-];
+/**
+ * The mega menus are built from the real catalogues in src/content, and every
+ * entry deep-links to its own anchor.
+ *
+ * They used to be hand-written lists here, and EVERY item shared one href — all
+ * 21 service links went to `/services`, all 17 industry links to `/industries`.
+ * Clicking a specific service dropped you on a page of collapsed accordions with
+ * nothing indicating what you had asked for, so each menu entry appeared to do
+ * the same nothing. The lists had also drifted from the catalogue: the menu
+ * offered "AI Agents" and "Legal"/"Energy"/"Agriculture", none of which exist in
+ * the content, so those were unfindable by design.
+ */
+type MegaCol = { title: string; items: { label: string; href: string }[] };
 
-const INDUSTRIES: { title: string; items: string[] }[] = [
-  {
-    title: 'By Sector',
-    items: ['Construction', 'Healthcare', 'Real Estate', 'Retail', 'Manufacturing', 'Finance'],
-  },
-  {
-    title: ' ',
-    items: ['Education', 'Logistics', 'Hospitality', 'Legal', 'Energy', 'Agriculture'],
-  },
-  {
-    title: 'By Business Need',
-    items: ['Build an MVP', 'Automate Business', 'Increase Sales with AI', 'Launch SaaS', 'Digital Transformation'],
-  },
-];
-
-function Mega({ columns, moreHref, moreLabel }: {
-  columns: { title: string; items: string[] }[];
+function Mega({ columns, moreHref, moreLabel, extra }: {
+  columns: MegaCol[];
   moreHref: string;
   moreLabel: string;
+  extra?: MegaCol;
 }) {
+  const cols = extra ? [...columns, extra] : columns;
   return (
     <div className="mega">
       <div className="mega-inner">
-        {columns.map((col) => (
-          <div className="mega-col" key={col.title + col.items[0]}>
+        {cols.map((col, ci) => (
+          <div className="mega-col" key={`${col.title}-${ci}`}>
             <div className="mega-title">{col.title}</div>
             {col.items.map((item) => (
-              <a key={item} href={moreHref} className="mega-item">
-                {item}
+              <a key={item.href + item.label} href={item.href} className="mega-item">
+                {item.label}
               </a>
             ))}
           </div>
@@ -117,11 +105,23 @@ export default function Nav() {
           <a className="link" href="/" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0 }); }}>Home</a>
           <div className="link has-mega">
             <span>Services <i className="chev" /></span>
-            <Mega columns={SERVICES} moreHref="/services" moreLabel="Explore all services" />
+            <Mega
+              columns={NAV_SERVICE_COLUMNS}
+              moreHref="/services"
+              moreLabel="Explore all services"
+            />
           </div>
           <div className="link has-mega">
             <span>Industries <i className="chev" /></span>
-            <Mega columns={INDUSTRIES} moreHref="/industries" moreLabel="Explore all industries" />
+            <Mega
+              columns={NAV_INDUSTRY_COLUMNS}
+              moreHref="/industries"
+              moreLabel="Explore all industries"
+              extra={{
+                title: 'By Business Need',
+                items: BUSINESS_NEEDS.slice(0, 5).map((n) => ({ label: n, href: '/contact' })),
+              }}
+            />
           </div>
           <a className="link" href="/library">Work</a>
           <a className="link" href="/pricing">Pricing</a>
@@ -160,8 +160,10 @@ export default function Nav() {
         <div className="drawer-sub">
           <div className="drawer-sub-title">POPULAR</div>
           <div className="drawer-chips">
-            {['AI Agents', 'Custom Software', 'Automation', 'Cloud & DevOps', 'SEO · GEO'].map((c) => (
-              <a key={c} href="/services" className="act-chip" onClick={() => setOpen(false)}>{c}</a>
+            {/* real categories with real anchors — these were five hand-typed
+                labels all pointing at /services */}
+            {NAV_SERVICE_COLUMNS.flatMap((c) => c.items).slice(0, 6).map((c) => (
+              <a key={c.href} href={c.href} className="act-chip" onClick={() => setOpen(false)}>{c.label}</a>
             ))}
           </div>
         </div>

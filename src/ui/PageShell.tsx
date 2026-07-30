@@ -27,6 +27,31 @@ export default function PageShell({ kicker, title, sub, children }: {
     }, { threshold: 0.01, rootMargin: '0px 0px -2% 0px' });
     els.forEach((el, i) => { el.style.transitionDelay = `${(i % 6) * 60}ms`; io.observe(el); });
 
+    // ---- SAFETY NET ----
+    // This reveal is the single biggest correctness risk on the site: anything it
+    // misses renders as `opacity: 0` — a blank gap where real content should be —
+    // and because the observer unobserves on first hit, it never recovers. It has
+    // been caught doing exactly that three times (FAQ rows, and a service branch
+    // deep-linked from the nav, which arrives mid-smooth-scroll and so is
+    // off-screen at the moment the observer is created).
+    //
+    // So: a couple of one-shot sweeps reveal anything that is genuinely on
+    // screen but still hidden. These are two timers, not per-frame work, so the
+    // layout reads here cost nothing measurable — and correctness beats a
+    // perfectly staggered entrance.
+    const sweep = () => {
+      for (const el of els) {
+        if (el.classList.contains('in')) continue;
+        const r = el.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < window.innerHeight) {
+          el.classList.add('in');
+          io.unobserve(el);
+        }
+      }
+    };
+    const t1 = window.setTimeout(sweep, 900);
+    const t2 = window.setTimeout(sweep, 2500);
+
     // the 3D language carries onto every inner page
     const el = root.current;
     const SEL = '.svc-card, .ind-card, .quote-card, .eng-card, .ins-card, .pwin, .art-card, .svc-branch, .contact-fact, .flow-dot, .mcard, .dcard';
@@ -46,6 +71,8 @@ export default function PageShell({ kicker, title, sub, children }: {
     el?.addEventListener('mouseout', onOut, { passive: true });
 
     return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
       io.disconnect();
       el?.removeEventListener('mousemove', onMove);
       el?.removeEventListener('mouseout', onOut);

@@ -150,6 +150,31 @@ export const INDUSTRY_CARDS: { name: string; line: string; img: string }[] = [
   { name: 'Hospitality', line: 'Dynamic pricing, guest messaging, revenue OS.', img: '/img/hospitality.jpg' },
 ];
 
+/** URL-safe id for an industry — the anchor the nav deep-links to. */
+export function indSlug(name: string) {
+  return name.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * Industry mega-menu columns, DERIVED from INDUSTRY_CARDS — for the same reason
+ * the service columns are: the nav's hand-written list had drifted and offered
+ * three sectors (Legal, Energy, Agriculture) that exist nowhere else on the
+ * site, so those links led to a page that never mentions them.
+ */
+export const NAV_INDUSTRY_COLUMNS: { title: string; items: { label: string; href: string }[] }[] = (() => {
+  const half = Math.ceil(INDUSTRY_CARDS.length / 2);
+  return [
+    {
+      title: 'By Sector',
+      items: INDUSTRY_CARDS.slice(0, half).map((i) => ({ label: i.name, href: `/industries#${indSlug(i.name)}` })),
+    },
+    {
+      title: ' ',
+      items: INDUSTRY_CARDS.slice(half).map((i) => ({ label: i.name, href: `/industries#${indSlug(i.name)}` })),
+    },
+  ];
+})();
+
 export const FAQS = [
   { q: 'What does PAR Technologys actually build?', a: 'AI agents and automation, custom software (web, mobile, SaaS, enterprise), machine-learning systems, cloud infrastructure, cyber security and growth engineering. One team, end to end — from the first audit to running production.' },
   { q: 'How long does a typical project take?', a: 'An MVP usually ships in 4–8 weeks. Larger platforms run in weekly increments so you see working software every single week — no six-month black boxes.' },

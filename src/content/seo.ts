@@ -22,8 +22,21 @@ export const SITE = {
   legalName: 'PAR Technologys',
   tagline: 'We Build Intelligence.',
   url: resolveSiteUrl(),
-  /** the address the business already publishes — not an invented one */
-  email: 'commission@partechnologys.com',
+  /**
+   * The published addresses, given by the business on 2026-07-30.
+   * `email` is the primary one everything defaults to (contact form target,
+   * structured data, footer); `emailOffice` is the office/admin line.
+   * Both were supplied as info@ / office@ and replace the previous
+   * commission@ address.
+   */
+  email: 'info@partechnologys.com',
+  emailOffice: 'office@partechnologys.com',
+  /**
+   * Where the work happens. Given as: USA, Canada, Dubai, UK and Pakistan,
+   * serving worldwide. These are OPERATING markets — not a registered address,
+   * which is still outstanding for the legal pages.
+   */
+  regions: ['USA', 'Canada', 'Dubai', 'UK', 'Pakistan'] as readonly string[],
   description:
     'PAR Technologys is an AI and software company. We build AI agents, custom software, cloud platforms, data systems and cyber security for businesses that want to run on intelligence.',
   locale: 'en_US',
@@ -43,4 +56,6 @@ export const ROUTES: { path: string; priority: number; changeFrequency: 'daily' 
   { path: '/careers', priority: 0.6, changeFrequency: 'monthly' },
   { path: '/faq', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/contact', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/privacy', priority: 0.3, changeFrequency: 'monthly' },
+  { path: '/terms', priority: 0.3, changeFrequency: 'monthly' },
 ];

@@ -14,6 +14,32 @@ export const SERVICE_TREE: { cat: string; blurb: string; items: string[] }[] = [
   { cat: 'Support', blurb: 'We stay after the launch.', items: ['Technical Support', 'Software Maintenance', 'Website Maintenance', 'Security Updates', 'Performance Optimization', 'Monitoring', 'Managed IT Services'] },
 ];
 
+/** URL-safe id for a category — the anchor the nav deep-links to. */
+export function svcSlug(cat: string) {
+  return cat.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * The mega-menu columns, DERIVED from SERVICE_TREE.
+ *
+ * The nav used to carry its own hand-written list of 21 service names, and it
+ * had already drifted from the catalogue — the menu offered "AI Agents" while
+ * the page listed "AI Chatbots", so a visitor could never find what they
+ * clicked. Deriving the menu from the catalogue makes that drift impossible,
+ * and every entry now points at a real anchor on the services page.
+ */
+export const NAV_SERVICE_COLUMNS: { title: string; items: { label: string; href: string }[] }[] = (() => {
+  const per = Math.ceil(SERVICE_TREE.length / 3);
+  const titles = ['Intelligence & Automation', 'Build & Engineer', 'Grow & Operate'];
+  return [0, 1, 2].map((c) => ({
+    title: titles[c],
+    items: SERVICE_TREE.slice(c * per, (c + 1) * per).map((s) => ({
+      label: s.cat,
+      href: `/services#${svcSlug(s.cat)}`,
+    })),
+  }));
+})();
+
 export const BUSINESS_NEEDS = [
   'Build an MVP', 'Automate Business', 'Increase Sales with AI', 'Modernize Legacy Systems',
   'Launch SaaS Product', 'Improve Customer Support', 'Digital Transformation',

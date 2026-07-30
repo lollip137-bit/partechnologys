@@ -1,7 +1,7 @@
 'use client';
 
 import PageShell from '@/ui/PageShell';
-import { INDUSTRY_CARDS } from '@/content/site';
+import { INDUSTRY_CARDS, indSlug } from '@/content/site';
 import { BUSINESS_NEEDS } from '@/content/services';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,8 +16,9 @@ export default function IndustriesPage() {
       <section className="sec sec-alt">
         <div className="wrap">
           <div className="ind-grid page-grid">
+            {/* id on each card = the anchor the Industries mega menu deep-links to */}
             {INDUSTRY_CARDS.map((industry, i) => (
-              <div key={industry.name} className="ind-card has-photo" data-a>
+              <div key={industry.name} id={indSlug(industry.name)} className="ind-card has-photo" data-a>
                 <span className="ind-photo">
                   <Image src={industry.img} alt="" fill sizes="(max-width: 700px) 92vw, 360px" />
                 </span>

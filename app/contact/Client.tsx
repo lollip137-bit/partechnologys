@@ -217,6 +217,17 @@ export default function ContactPage() {
               <button className="copy-btn" type="button" onClick={copy} aria-label="Copy email address">
                 {copied ? 'Copied ✓' : 'Copy'}
               </button>
+              <span className="direct-alt">
+                Office &amp; accounts:{' '}
+                <a href={`mailto:${SITE.emailOffice}`}>{SITE.emailOffice}</a>
+              </span>
+            </div>
+
+            <div className="direct-card">
+              <span className="side-label">Where we work</span>
+              <p className="side-regions">
+                {SITE.regions.join(' · ')} — and worldwide.
+              </p>
             </div>
           </aside>
         </div>
