@@ -21,9 +21,15 @@ attribute float aKind; // 0 star, 1 dust, 2 nebula
 attribute float aSeed;
 uniform float uTime;
 uniform float uPixelRatio;
+uniform vec2  uFocus;
+uniform float uAspect;
+uniform float uMask;
+uniform float uMaskIn;
+uniform float uMaskOut;
 varying float vKind;
 varying float vSeed;
 varying float vFade;
+varying float vMask;
 void main(){
   vKind = aKind;
   vSeed = aSeed;
@@ -37,9 +43,20 @@ void main(){
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   float depth = -mv.z;
   float size = aSize;
-  gl_PointSize = clamp(size * uPixelRatio * (110.0 / max(depth, 1.0)), 0.5, 4.0);
+  // TINY DUST. The old ceiling was 4px, which on a dark frame reads as a swarm
+  // of little discs — grit on the lens, not atmosphere. Dust is now capped near
+  // a single pixel so it registers only as fine density; stars keep a slightly
+  // larger cap because they are meant to resolve as points of light.
+  float maxSz = (aKind > 0.5 && aKind < 1.5) ? 1.25 : 2.1;
+  gl_PointSize = clamp(size * uPixelRatio * (110.0 / max(depth, 1.0)), 0.32, maxSz);
   vFade = smoothstep(1.5, 8.0, depth) * exp(-depth * 0.006);
+
+  // composition mask — the ambient layer obeys the same rule as the particle
+  // field, so the copy panel never sits on a bed of drifting motes
   gl_Position = projectionMatrix * mv;
+  vec2 sp = (gl_Position.xy / max(gl_Position.w, 0.0001)) * 0.5 + 0.5;
+  vec2 dv = (sp - uFocus) * vec2(uAspect, 1.0);
+  vMask = 1.0 - uMask * smoothstep(uMaskIn, uMaskOut, length(dv));
 }
 `;
 
@@ -50,10 +67,12 @@ uniform float uReveal;
 varying float vKind;
 varying float vSeed;
 varying float vFade;
+varying float vMask;
 void main(){
   vec2 c = gl_PointCoord - 0.5;
   float d = length(c);
   if (d > 0.5) discard;
+  if (vMask < 0.004) discard;
   vec3 col;
   float alpha;
   if (vKind < 0.5) {
@@ -68,7 +87,8 @@ void main(){
     col = vec3(0.135, 0.42, 0.95);
     alpha = core * 0.15;
   }
-  gl_FragColor = vec4(col * alpha * vFade * uReveal, alpha * vFade * uReveal);
+  float a = alpha * vFade * uReveal * vMask;
+  gl_FragColor = vec4(col * a, a);
 }
 `;
 
@@ -89,17 +109,19 @@ export default function Cosmos() {
         (Math.random() * 2 - 1) * 150,
         (Math.random() * 2 - 1) * 90,
         60 - Math.random() * 500,
-        0.5 + Math.random() * 1.1,
+        0.38 + Math.random() * 0.8,
         0,
       );
     }
-    // dust: closer to the path, always adrift
+    // dust: closer to the path, always adrift. Sizes cut to roughly a fifth of
+    // what they were — real airborne dust is finer than a pixel and only shows
+    // up as a faint grain in the light, never as visible specks.
     for (let n = 0; n < DUST; n++) {
       put(
         (Math.random() * 2 - 1) * 46,
         (Math.random() * 2 - 1) * 30,
         45 - Math.random() * 440,
-        1.2 + Math.random() * 2.2,
+        0.24 + Math.random() * 0.5,
         1,
       );
     }
@@ -120,6 +142,11 @@ export default function Cosmos() {
         uTime: { value: 0 },
         uPixelRatio: { value: 1 },
         uReveal: { value: 0 },
+        uFocus: { value: new THREE.Vector2(0.5, 0.5) },
+        uAspect: { value: 1.777 },
+        uMask: { value: 0 },
+        uMaskIn: { value: 0.5 },
+        uMaskOut: { value: 1.0 },
       },
     });
     return { geo, mat };
@@ -133,8 +160,19 @@ export default function Cosmos() {
     // reads as dirt on the lens, so the frame returns to true black and the
     // logo is the only thing left alive in it.
     const p = timeline.progress;
+    // ...and it withdraws COMPLETELY for the finale (it used to leave 12%
+    // behind, which is the faint speckle that surrounded the brand mark).
     mat.uniforms.uReveal.value =
-      smoothstep(0.03, 0.12, p) * (1 - smoothstep(0.885, 0.95, p) * 0.88);
+      smoothstep(0.03, 0.12, p) * (1 - smoothstep(0.875, 0.94, p));
+
+    // the ambient layer shares the particle field's composition mask
+    mat.uniforms.uFocus.value.set(timeline.focus.x, timeline.focus.y);
+    mat.uniforms.uAspect.value = state.size.width / Math.max(state.size.height, 1);
+    // A touch gentler and wider than the field's own mask: the cosmos is the
+    // backdrop, so it should fall away rather than cut off.
+    mat.uniforms.uMask.value = 0.9 * smoothstep(0.19, 0.26, p) * timeline.focus.inFrame;
+    mat.uniforms.uMaskIn.value = 0.46;
+    mat.uniforms.uMaskOut.value = 1.02;
   });
 
   return <points geometry={geo} material={mat} frustumCulled={false} renderOrder={-1} />;

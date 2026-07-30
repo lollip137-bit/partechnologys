@@ -40,6 +40,22 @@ const SPIN_STATION: Record<string, keyof typeof STATION> = {
   tech: 'tech', eco: 'eco', world: 'world', logo: 'logo',
 };
 
+// ---- COMPOSITION MASK, per act ----
+// How aggressively the frame goes black away from the subject. ACT I is a
+// full-screen field by design and is never masked; the tight, legible acts are
+// masked hard so the copy panel sits on nothing; `world` is a deliberately
+// wide spread of clusters, so it keeps a generous radius.
+const MASK_AMT: Record<string, number> = {
+  genesis: 0, dna: 1, brain: 1, network: 0.92, digital: 1,
+  tech: 0.95, eco: 0.88, world: 0.6, logo: 1,
+};
+// [full-brightness radius, fully-black radius] in screen heights
+const MASK_R: Record<string, [number, number]> = {
+  genesis: [1.6, 2.2], dna: [0.34, 0.70], brain: [0.34, 0.70],
+  network: [0.38, 0.78], digital: [0.36, 0.74], tech: [0.38, 0.78],
+  eco: [0.44, 0.88], world: [0.58, 1.10], logo: [0.30, 0.62],
+};
+
 function makeRT() {
   return new THREE.WebGLRenderTarget(TEX_SIZE, TEX_SIZE, {
     minFilter: THREE.NearestFilter,
@@ -75,7 +91,8 @@ export default function ParticleEngine() {
         uPos: { value: null }, uVel: { value: null },
         uTargetA: { value: null }, uTargetB: { value: null }, uBlend: { value: 0 },
         uTime: { value: 0 }, uDt: { value: 0.016 },
-        uSeek: { value: 0 }, uCurlAmp: { value: 0.1 }, uCurlScale: { value: 0.18 },
+        uSeek: { value: 0 }, uCrit: { value: 0 },
+        uCurlAmp: { value: 0.1 }, uCurlScale: { value: 0.18 },
         uSwirl: { value: 0 }, uSwirlSpeed: { value: 1 }, uBurst: { value: 0 },
         uDamp: { value: 0.92 }, uMaxSpeed: { value: 9 },
         uSwirlCenter: { value: new THREE.Vector3(0, 0, 0) },
@@ -167,6 +184,9 @@ export default function ParticleEngine() {
         uFog: { value: 0.016 }, uEnergy: { value: 0 },
         uWave: { value: 0 }, uWaveR: { value: 0 },
         uIntensity: { value: 3.2 }, uHalo: { value: 1 },
+        uRes: { value: new THREE.Vector2(1, 1) },
+        uFocus: { value: new THREE.Vector2(0.5, 0.5) },
+        uMask: { value: 0 }, uMaskIn: { value: 0.4 }, uMaskOut: { value: 0.8 },
       },
     });
     return { geo, mat };
@@ -244,16 +264,40 @@ export default function ParticleEngine() {
     velMat.uniforms.uTargetA.value = texA;
     velMat.uniforms.uTargetB.value = texB;
     velMat.uniforms.uBlend.value = blend;
-    velMat.uniforms.uSeek.value = seekW * (10.0 + (1 - formed) * 6.0 + logoW * 6.0);
+    // ---- ASSEMBLY SPEED ----
+    // Roughly 3x the old stiffness. Arrival time scales with 1/sqrt(k), so this
+    // is about 1.7x faster into place — and because uCrit below damps it
+    // critically, the extra stiffness buys speed instead of jitter.
+    const seek = seekW * (30.0 + (1 - formed) * 18.0 + logoW * 14.0);
+    velMat.uniforms.uSeek.value = seek;
+    // 2*sqrt(k) is the critically-damped coefficient — the fastest approach
+    // that never overshoots. Slightly under it (0.92) leaves a trace of
+    // liquid follow-through so the motion still reads as matter, not UI easing.
+    velMat.uniforms.uCrit.value = 2.0 * Math.sqrt(Math.max(seek, 0)) * 0.92;
     velMat.uniforms.uCurlAmp.value =
       (0.16 + wakeW * 0.35 + vortexW * 1.25 + seekW * 0.55 * (1 - formed * 0.7) + energyBoost * 0.25) * precise;
     velMat.uniforms.uCurlScale.value = 0.16 + vortexW * 0.06;
     velMat.uniforms.uSwirl.value = vortexW * 2.4;
     velMat.uniforms.uSwirlSpeed.value = 1 + smoothstep(0.12, 0.21, p) * 2.2;
-    velMat.uniforms.uBurst.value = 0;
+
+    // ---- DESTROY ----
+    // Structures used to simply fade toward the next target, which is what made
+    // transitions feel slow and gluey. Now each act ENDS with a real outward
+    // impulse the instant its hold expires: the shape blows apart, and the
+    // (now much stiffer) seek spring immediately reels the same matter into the
+    // next one. Fast form, fast destroy, one conserved population.
+    const burst = Math.max(
+      window01(p, holdA[1] - 0.006, holdA[1] + 0.004, holdA[1] + 0.014, holdA[1] + 0.032),
+      // scrolling back up detonates the shape the reader is leaving too
+      window01(p, holdA[0] - 0.030, holdA[0] - 0.012, holdA[0] - 0.004, holdA[0] + 0.004),
+    );
+    velMat.uniforms.uBurst.value = burst * 30.0;
+    // The burst radiates from the CENTRE OF THE STRUCTURE being destroyed, not
+    // from the world origin. (At the genesis act this station is 0, so the
+    // vortex physics that also reads uSwirlCenter is untouched.)
     velMat.uniforms.uDamp.value =
-      0.855 + vortexW * 0.09 - logoW * 0.01;
-    velMat.uniforms.uMaxSpeed.value = 20 + energyBoost * 5 + logoW * 10;
+      0.88 + vortexW * 0.07 - logoW * 0.01;
+    velMat.uniforms.uMaxSpeed.value = 26 + energyBoost * 6 + logoW * 12;
 
     // pointer physics: ray through the cursor + click shockwave
     const cam = state.camera;
@@ -271,6 +315,7 @@ export default function ParticleEngine() {
     velMat.uniforms.uSpin.value = (SPIN_AMT[domShape] ?? 0) * formed;
     const spinZ = STATION[SPIN_STATION[domShape] ?? 'vortex'];
     velMat.uniforms.uSpinCenter.value.set(0, 0, spinZ);
+    velMat.uniforms.uSwirlCenter.value.set(0, 0, spinZ);
 
     // every formed object breathes and turns toward the cursor, always
     velMat.uniforms.uAlive.value = formed * seekW;
@@ -328,6 +373,22 @@ export default function ParticleEngine() {
     m.uEnergy.value = Math.min(1, energyBoost * 0.6);
     m.uWave.value = wakeW;
     m.uWaveR.value = waveR;
+
+    // ---- COMPOSITION MASK ----
+    // The subject's screen position is projected once per frame in PostFX.
+    // Blend the mask shape across the morph so the frame never pops.
+    m.uRes.value.set(state.size.width, state.size.height);
+    m.uFocus.value.set(timeline.focus.x, timeline.focus.y);
+    const rA = MASK_R[shapeOrder[base]] ?? [0.4, 0.8];
+    const rB = MASK_R[shapeOrder[next]] ?? [0.4, 0.8];
+    m.uMaskIn.value = rA[0] + (rB[0] - rA[0]) * blend;
+    m.uMaskOut.value = rA[1] + (rB[1] - rA[1]) * blend;
+    const amtA = MASK_AMT[shapeOrder[base]] ?? 0;
+    const amtB = MASK_AMT[shapeOrder[next]] ?? 0;
+    // Only mask while the subject is actually IN frame — if the projection has
+    // slid off-screen there is no meaningful centre to mask around, and a mask
+    // anchored off-frame would black out the visible matter instead.
+    m.uMask.value = (amtA + (amtB - amtA) * blend) * timeline.focus.inFrame;
 
     const palA = SHAPE_PALETTES[shapeOrder[base]];
     const palB = SHAPE_PALETTES[shapeOrder[next]];

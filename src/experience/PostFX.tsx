@@ -8,7 +8,6 @@ import { HalfFloatType } from 'three';
 import { Vector2, Vector3, PerspectiveCamera } from 'three';
 import { timeline, smoothstep } from '@/state/timeline';
 import { device } from '@/state/ticker';
-import { LightShaftsEffect } from './LightShafts';
 import { STATION } from './phases';
 
 export default function PostFX() {
@@ -25,17 +24,20 @@ export default function PostFX() {
     [],
   );
 
-  const shafts = useMemo(() => new LightShaftsEffect(), []);
   const lightPos = useMemo(() => new Vector3(), []);
   const screen = useMemo(() => new Vector2(), []);
 
   useFrame((state) => {
-    // aberration swells with scroll velocity — always subtle
+    // Aberration swells with scroll velocity — but only barely. The old ceiling
+    // (0.00245) was wide enough to split any bright streak into separate red,
+    // green and blue copies, which is what made fast scrolling look like a
+    // scratched 70s film print rather than a camera lens.
     const e = Math.min(1, Math.abs(timeline.velocity) * 0.3);
-    const amt = 0.00045 + e * 0.002;
+    const amt = 0.0003 + e * 0.0006;
     ca.offset.set(amt, amt * 0.6);
 
-    // god rays stream from the heart of whichever structure is on stage
+    // The subject's screen position, projected once per frame and shared with
+    // the particle field and the ambient cosmos via `timeline.focus`.
     const p = timeline.progress;
     const stations: [number, number][] = [
       [0.10, STATION.vortex], [0.225, STATION.dna], [0.33, STATION.brain],
@@ -47,16 +49,17 @@ export default function PostFX() {
     for (const [edge, sz] of stations) { if (p >= edge) z = sz; }
     lightPos.set(0, 0, z).project(state.camera as PerspectiveCamera);
     screen.set(lightPos.x * 0.5 + 0.5, lightPos.y * 0.5 + 0.5);
-    shafts.light = screen;
-    // strongest while a structure is assembled, and never during the void
-    const onStage = smoothstep(0.03, 0.10, p);
     const inFront = lightPos.z < 1 ? 1 : 0;
-    // God rays sell a structure seen through dust. Over the assembled brand
-    // mark they are just a grey smear leaking out of the logo, so the finale
-    // switches them off and the frame stays clean.
-    const finale = 1 - smoothstep(0.895, 0.955, p);
-    shafts.strength =
-      onStage * inFront * finale * (0.16 + Math.min(0.1, Math.abs(timeline.velocity) * 0.06));
+
+    // How far inside the frame the subject sits. The composition mask is only
+    // meaningful while there is a subject on screen to compose around — if the
+    // projection slides off-frame, a mask anchored out there would black out
+    // the visible matter instead of the empty half.
+    const edgeX = 1 - smoothstep(0.62, 1.05, Math.abs(screen.x - 0.5));
+    const edgeY = 1 - smoothstep(0.62, 1.05, Math.abs(screen.y - 0.5));
+    timeline.focus.x = screen.x;
+    timeline.focus.y = screen.y;
+    timeline.focus.inFrame = inFront ? edgeX * edgeY : 0;
   });
 
   // phones run bloom + vignette only: aberration and grain cost a full-screen
@@ -80,7 +83,6 @@ export default function PostFX() {
           radius={0.62}
           resolutionScale={0.35}
         />
-        <primitive object={shafts} />
         <Vignette eskil={false} offset={0.18} darkness={0.84} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>
@@ -100,7 +102,6 @@ export default function PostFX() {
         resolutionScale={0.5}
       />
       <primitive object={ca} />
-      <primitive object={shafts} />
       <Noise premultiply opacity={0.1} />
       <Vignette eskil={false} offset={0.16} darkness={0.86} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />

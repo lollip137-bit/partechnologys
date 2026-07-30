@@ -8,6 +8,15 @@ export const timeline = {
   clickAt: -10, // clock time of last pointer-down (shockwave)
   ready: false, // particle engine compiled & first frame rendered
   camera: null as unknown, // live THREE camera — DOM overlays project 3D anchors through it
+  /**
+   * Where the structure currently on stage lands on screen (0..1, y up), and
+   * how far inside the frame that point sits (1 = comfortably central,
+   * 0 = off-frame). Computed ONCE per frame in PostFX — which runs after
+   * CameraRig, so the projection uses the settled camera — then read by the
+   * particle field, the ambient cosmos and the god-rays. One projection,
+   * three consumers, and every layer agrees on where the subject is.
+   */
+  focus: { x: 0.5, y: 0.5, inFrame: 0 },
 };
 
 export function clamp01(v: number) {

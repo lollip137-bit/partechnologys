@@ -63,6 +63,7 @@ uniform float uTime;
 uniform float uDt;
 // behavior mix, scheduled on CPU from scroll progress
 uniform float uSeek;      // spring toward morph target
+uniform float uCrit;      // critical damping paired to uSeek (fast, ring-free arrival)
 uniform float uCurlAmp;   // fluid turbulence amplitude
 uniform float uCurlScale; // turbulence spatial frequency
 uniform float uSwirl;     // vortex strength
@@ -109,6 +110,15 @@ void main(){
   float dist = length(toT);
   // spring with soft arrival — particles decelerate into place
   force += toT * uSeek * (0.6 + 0.4 * seed);
+
+  // CRITICAL DAMPING — the reason assembly used to feel like sludge.
+  // A stiff spring on its own oscillates, and the only brake was the global
+  // per-frame drag (uDamp), which slows the whole JOURNEY as much as the
+  // arrival. Pairing the spring with a velocity term of 2*sqrt(k) makes the
+  // approach a pure exponential: matter leaves fast, crosses fast, and stops
+  // dead on the target without a single overshoot. Raising uSeek without this
+  // just makes the field jitter.
+  force -= vel * uCrit * (0.85 + 0.3 * seed);
 
   // --- curl-noise flow field (alive, fluid). Skipped outright when the act
   // barely uses it — the field is by far the most expensive term here.
@@ -230,10 +240,14 @@ void main(){
   // Size distribution is heavily skewed toward the sub-pixel: the vast
   // majority of matter is finer than a pixel and only reads as density,
   // while a small minority is large enough to resolve as a mote.
-  float sizeRand = pow(s2, 2.3);
-  float size = uSize * (0.3 + 1.55 * sizeRand);
+  // Skewed harder toward the sub-pixel than before, and the ceiling lowered:
+  // the old 2.5px cap meant a large share of the population sat AT the clamp,
+  // so matter read as a cloud of little discs instead of dust. Now the bulk is
+  // genuinely finer than a pixel and only registers as density.
+  float sizeRand = pow(s2, 2.9);
+  float size = uSize * (0.22 + 1.3 * sizeRand);
   float ps = size * uPixelRatio * (95.0 / max(vDepth, 0.5));
-  ps = clamp(ps, 0.45, 2.5);
+  ps = clamp(ps, 0.4, 1.85);
 
   vec4 clip = projectionMatrix * mv;
 
@@ -245,7 +259,11 @@ void main(){
   vec2 d = b - a;
   float dl = length(d);
   vStreak = dl > 1e-5 ? d / dl : vec2(1.0, 0.0);
-  vStretch = clamp(dl * 24.0, 0.0, 2.2);
+  // Motion blur needs a DEAD ZONE. A formed structure still breathes, spins and
+  // chases a moving target, so without a threshold that residual jitter smears
+  // a handful of motes into bright white slashes that read as lens scratches on
+  // an otherwise still frame. Only genuine travel earns a streak now.
+  vStretch = clamp((dl - 0.0045) * 30.0, 0.0, 2.2);
   ps *= 1.0 + vStretch * 0.5;
 
   vPointSize = ps;
@@ -285,6 +303,17 @@ varying float vTemp;
 varying float vBright;
 uniform float uIntensity;  // HDR exposure of the nucleus
 uniform float uHalo;       // 1 = soft atmosphere per mote, 0 = pin-sharp points
+// ---- COMPOSITION MASK ----
+// Every act deliberately shoves the subject into one half of the frame so the
+// copy panel owns the other. Stray matter drifting through that empty half
+// breaks the composition — the panel should sit on true black. This fades the
+// field out by screen distance from the subject, so each act reads as ONE
+// object against nothing, and the finale loses the confetti around the mark.
+uniform vec2  uRes;
+uniform vec2  uFocus;   // subject's screen position, 0..1
+uniform float uMask;    // 0 = no mask (ACT I is a full-frame field by design)
+uniform float uMaskIn;  // radius (in screen HEIGHTS) held at full brightness
+uniform float uMaskOut; // radius by which matter is fully black
 void main(){
   if (vAlive < 0.5) discard;
   vec2 c = gl_PointCoord - 0.5;
@@ -324,8 +353,10 @@ void main(){
   col = mix(col, uCol2, vTemp * 0.20);          // cooler, toward brand white
   col = mix(col, uCol0, (1.0 - vTemp) * 0.14);  // deeper, toward brand navy
 
-  // motion energy → hotter core
-  float heat = smoothstep(6.0, 22.0, vSpeed);
+  // motion energy → hotter core. Threshold raised to sit above the resting
+  // breathe/spin velocity of an assembled structure, so only matter actually in
+  // transit blows out toward white.
+  float heat = smoothstep(12.0, 30.0, vSpeed);
 
   // travelling signals along structures (w is the flow coordinate)
   float ph = fract(vW * uPulseFreq - uTime * 0.55 + vSeed * 0.05);
@@ -342,6 +373,14 @@ void main(){
   float twinkle = 0.95 + 0.07 * sin(uTime * (0.5 + vSeed) + vSeed * 40.0);
   float lum = vBright * fog * twinkle * tailFade * (0.85 + 0.4 * uEnergy);
   lum *= smoothstep(0.6, 2.6, vDepth); // don't blow out when the camera passes through
+
+  // composition mask — distance measured in screen HEIGHTS so the falloff is
+  // identical on every aspect ratio (on 16:9 the far corner sits at ~0.89)
+  if (uMask > 0.001) {
+    vec2 dv = (gl_FragCoord.xy / uRes - uFocus) * vec2(uRes.x / uRes.y, 1.0);
+    lum *= 1.0 - uMask * smoothstep(uMaskIn, uMaskOut, length(dv));
+  }
+  if (lum < 0.0008) discard; // fully masked matter costs no blending
 
   // HDR: the nucleus is allowed far past 1.0 so bloom lifts it into real light
   float corePower = uIntensity * (1.0 + heat * 2.2 + pulse * 3.4 + wave * 3.0);
