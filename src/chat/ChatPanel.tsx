@@ -14,7 +14,49 @@ import { useChat } from "./useChat";
  *
  * Colours are the V3 site tokens: --cyan #00C2FF on --navy-deep #0A0F1D.
  */
-export function ChatPanel({ panelBottom = 210 }: { panelBottom?: number }) {
+export interface PanelAnchor {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  side: -1 | 1;
+}
+
+const PANEL_W = 354;
+const PANEL_H = 460;
+const GAP = 12;
+
+/**
+ * Place the panel next to PARi and always fully on screen: prefer above, flip
+ * below if there's no room, and align to whichever side keeps it in view.
+ */
+function anchorPanel(a: PanelAnchor) {
+  const vw = typeof window === "undefined" ? 1280 : window.innerWidth;
+  const vh = typeof window === "undefined" ? 800 : window.innerHeight;
+  const w = Math.min(PANEL_W, vw - 2 * GAP);
+  const h = Math.min(PANEL_H, vh - 2 * GAP);
+
+  // vertical: above PARi if it fits, else below, else pinned in view
+  let top = a.y - h - GAP;
+  if (top < GAP) {
+    const below = a.y + a.height + GAP;
+    top = below + h <= vh - GAP ? below : Math.max(GAP, vh - h - GAP);
+  }
+
+  // horizontal: align the panel's near edge with PARi, then clamp
+  let left = a.side === 1 ? a.x + a.width - w : a.x;
+  left = Math.max(GAP, Math.min(left, vw - w - GAP));
+
+  return { left, top, width: w, height: h };
+}
+
+export function ChatPanel({
+  placement,
+  onDismiss,
+}: {
+  placement: PanelAnchor;
+  onDismiss: () => void;
+}) {
   const open = useChat((s) => s.open);
   const messages = useChat((s) => s.messages);
   const streaming = useChat((s) => s.streaming);
@@ -38,6 +80,8 @@ export function ChatPanel({ panelBottom = 210 }: { panelBottom?: number }) {
   // dismisses it — both are what people expect from a chat bubble.
   useEffect(() => {
     if (!open) return;
+    // Escape just closes the panel; it is not a rejection of PARi, so it does
+    // NOT trigger the hide-and-peek sulk. Only the ✕ does that.
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closePanel();
     };
@@ -81,9 +125,8 @@ export function ChatPanel({ panelBottom = 210 }: { panelBottom?: number }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12, scale: 0.97 }}
           transition={{ type: "spring", stiffness: 340, damping: 32 }}
-          // bottom is driven by the mascot's live footprint so the panel always
-          // sits just above PARi, on desktop and on the shrunken mobile dock
-          style={{ ...panelStyle, bottom: panelBottom }}
+          // follows PARi wherever it has been dragged, always kept on screen
+          style={{ ...panelStyle, ...anchorPanel(placement) }}
         >
           <header style={headerStyle}>
             <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
@@ -93,8 +136,9 @@ export function ChatPanel({ panelBottom = 210 }: { panelBottom?: number }) {
             </span>
             <button
               type="button"
-              aria-label="Close chat"
-              onClick={closePanel}
+              aria-label="Dismiss PARi"
+              title="Dismiss — PARi will wait at the edge"
+              onClick={onDismiss}
               style={closeBtn}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(0,194,255,0.16)";
@@ -189,10 +233,7 @@ const srOnly: React.CSSProperties = {
 
 const panelStyle: React.CSSProperties = {
   position: "fixed",
-  right: 18,
-  // `bottom` is supplied per-render from the mascot's footprint (see above)
-  width: "min(354px, calc(100vw - 28px))",
-  height: "min(460px, 58vh)",
+  // left/top/width/height come from anchorPanel(), which tracks PARi
   display: "flex",
   flexDirection: "column",
   borderRadius: 16,

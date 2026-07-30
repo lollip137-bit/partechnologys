@@ -5,7 +5,7 @@ import { useMascotState } from "./useMascotState";
 import { MascotModel } from "./MascotModel";
 import { PerfMonitor } from "./PerfMonitor";
 
-import type { MascotBox } from "./useMascotBox";
+import type { Placement } from "./useMascotPlacement";
 
 /**
  * The <Canvas> wrapper. Mounted ONCE at app root, fixed-position, sized to the
@@ -19,18 +19,25 @@ import type { MascotBox } from "./useMascotBox";
  * Lighting is keyed to the V3 palette: a warm-neutral key, a --blue rim and a
  * --cyan underglow so PARi sits in the same light as the particle film.
  */
-export function Mascot({ onFps, box }: { onFps?: (fps: number) => void; box: MascotBox }) {
+export function Mascot({
+  onFps,
+  placement,
+}: {
+  onFps?: (fps: number) => void;
+  placement: Placement;
+}) {
   const quality = useMascotState((s) => s.quality);
 
   return (
     <div
       aria-hidden="true"
+      data-pari-canvas=""
       style={{
         position: "fixed",
-        right: box.right,
-        bottom: box.bottom,
-        width: box.width,
-        height: box.height,
+        left: placement.x,
+        top: placement.y,
+        width: placement.width,
+        height: placement.height,
         pointerEvents: "none",
         zIndex: 2147482999,
       }}

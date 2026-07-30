@@ -20,12 +20,28 @@ export type MascotState =
   | "celebrate"
   | "sleepy"
   | "asleep"
-  | "peeking";
+  | "peeking"
+  /** Held by the user, mid-drag. */
+  | "dragging"
+  /** Poked, flung, or interrupted — PARi is not happy about it. */
+  | "annoyed"
+  /** Dismissed: slid off the screen edge, waiting to peek back in. */
+  | "hiding";
 
-/** Higher wins. Mirrors the priority line in brief §5 exactly. */
+/**
+ * Higher wins.
+ *
+ * `dragging` outranks everything: while the user physically holds PARi, no
+ * timer or hover may steal the pose. `hiding` sits just under it — once
+ * dismissed, PARi stays gone until it chooses to peek, and idle timers must not
+ * drag it back on screen.
+ */
 export const STATE_PRIORITY: Record<MascotState, number> = {
+  dragging: 140,
+  hiding: 130,
   boot: 120,
   celebrate: 100,
+  annoyed: 95,
   speaking: 90,
   thinking: 80,
   excited: 70,
@@ -69,6 +85,9 @@ interface MascotStore {
   /** Smoothed scroll velocity for the body lean. */
   scrollVelocity: number;
 
+  /** Screen edge PARi hides behind / peeks from: -1 left, +1 right. */
+  hideDir: 1 | -1;
+
   /** Global runtime flags. */
   reducedMotion: boolean;
   quality: Quality;
@@ -90,6 +109,7 @@ interface MascotStore {
   setLookTarget: (t: { x: number; y: number } | null) => void;
   setScrollVelocity: (v: number) => void;
   setMood: (m: Mood) => void;
+  setHideDir: (d: 1 | -1) => void;
   setReducedMotion: (r: boolean) => void;
   setQuality: (q: Quality) => void;
   setEnabled: (e: boolean) => void;
@@ -123,6 +143,7 @@ export const useMascotState = create<MascotStore>((set, get) => ({
   pointer: { x: 0, y: 0 },
   lookTarget: null,
   scrollVelocity: 0,
+  hideDir: 1,
   reducedMotion: false,
   quality: "high",
   enabled: true,
@@ -166,6 +187,7 @@ export const useMascotState = create<MascotStore>((set, get) => ({
   setLookTarget: (t) => set({ lookTarget: t }),
   setScrollVelocity: (v) => set({ scrollVelocity: v }),
   setMood: (m) => set({ mood: m }),
+  setHideDir: (d) => set({ hideDir: d }),
   setReducedMotion: (r) => set({ reducedMotion: r }),
   setQuality: (q) => set({ quality: q }),
   setEnabled: (e) => set({ enabled: e }),

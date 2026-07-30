@@ -52,8 +52,11 @@ export function MascotModel() {
   // Drive the GSAP timeline off resolved-state changes WITHOUT re-rendering the
   // R3F tree: subscribe imperatively.
   useEffect(() => {
+    tm.hideDir = mascotStore.getState().hideDir;
     tm.go(mascotStore.getState().state);
     const unsub = mascotStore.subscribe((s, prev) => {
+      // keep the edge current BEFORE building a hide/peek timeline
+      tm.hideDir = s.hideDir;
       if (s.state !== prev.state) tm.go(s.state);
     });
     return () => {
@@ -90,9 +93,14 @@ export function MascotModel() {
     // slow breath while asleep (adds a tiny scale pulse)
     const breath = drive.breathe * Math.sin(t * 0.8) * 0.012 * ambient;
 
+    // irritated tremble — fast, small, amplitude decays via drive.shake
+    const sh = drive.shake * ambient;
+    const shakeX = sh ? Math.sin(t * 47) * 0.032 * sh : 0;
+    const shakeY = sh ? Math.sin(t * 61) * 0.020 * sh : 0;
+
     if (root.current) {
-      root.current.position.x = drive.offsetX;
-      root.current.position.y = floatY + drive.sinkY;
+      root.current.position.x = drive.offsetX + shakeX;
+      root.current.position.y = floatY + drive.sinkY + shakeY;
       root.current.rotation.y = drive.spin;
       const sc = drive.scale + breath;
       root.current.scale.setScalar(sc);
@@ -167,6 +175,8 @@ export function MascotModel() {
     u.uWide.value = drive.wide;
     u.uNarrow.value = drive.narrow;
     u.uSad.value = disappointed ? 1 : drive.sad;
+    u.uAngry.value = drive.angry;
+    u.uHeat.value = drive.heat;
     u.uFlicker.value = drive.flicker;
     u.uLookInfluence.value = drive.lookInfluence;
     (u.uLook.value as THREE.Vector2).set(s.pointer.x, s.pointer.y);

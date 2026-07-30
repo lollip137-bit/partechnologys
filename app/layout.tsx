@@ -9,7 +9,7 @@ import './library.css';
 import './inner.css';
 import './services.css';
 import { SITE } from '@/content/seo';
-import { MascotRoot } from '@/mascot/MascotRoot';
+import { MascotMount } from '@/mascot/MascotMount';
 
 const sora = Sora({ subsets: ['latin'], variable: '--font-sora', weight: ['300', '400', '600', '700', '800'], display: 'swap' });
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -118,7 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {children}
         {/* PARi — the floating AI companion. Mounted once, persists across routes. */}
-        <MascotRoot />
+        <MascotMount />
         <script
           type="application/ld+json"
           // schema.org graph — static, authored here, never user input

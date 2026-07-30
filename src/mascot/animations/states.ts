@@ -16,7 +16,11 @@ import type { MascotState } from "../useMascotState";
 const DUR = 0.55; // default transition seconds
 const EASE = "power2.out";
 
-type Builder = (d: Drive) => gsap.core.Timeline;
+/**
+ * `hideDir` is the screen edge PARi hid behind (-1 left, +1 right); only the
+ * hide/peek pair use it, so every other builder simply ignores it.
+ */
+type Builder = (d: Drive, hideDir?: number) => gsap.core.Timeline;
 
 /** Shared helper: tween a resting expression, returning the timeline. */
 function toRest(tl: gsap.core.Timeline, d: Drive, extra: Partial<Drive> = {}) {
@@ -272,15 +276,111 @@ export const asleep: Builder = (d) => {
   return tl;
 };
 
-export const peeking: Builder = (d) => {
+/**
+ * Peeks back in from the edge it hid behind, watches you for a moment, then
+ * ducks out again. `hideDir` is the screen edge PARi went behind (-1 left,
+ * +1 right) so it always returns from the same side it left.
+ */
+export const peeking: Builder = (d, hideDir = 1) => {
   const tl = gsap.timeline();
-  // exit frame, re-enter from an edge, peek (curious), then settle.
-  const dir = Math.random() < 0.5 ? -1 : 1;
-  tl.to(d, { offsetX: dir * 2.4, eyeOpen: 0.2, duration: 0.5, ease: "power2.in", overwrite: "auto" })
-    .set(d, { offsetX: -dir * 2.4 })
-    .to(d, { offsetX: -dir * 1.1, eyeOpen: 1, wide: 0.9, duration: 0.6, ease: "power3.out" })
-    .to(d, { offsetX: 0, wide: 0.3, happy: 0.4, headTiltZ: (8 * Math.PI) / 180, duration: 0.7, ease: "power2.out" })
-    .to(d, { happy: 0, headTiltZ: 0, duration: 0.5, ease: "power1.inOut" });
+  const off = 2.4 * hideDir; // fully off-screen on that side
+  const peek = 1.35 * hideDir; // only the head/shoulder showing
+  tl.set(d, { offsetX: off, eyeOpen: 0.2, happy: 0, sad: 0, angry: 0, heat: 0, shake: 0 })
+    // lean in, one eye first
+    .to(d, { offsetX: peek, eyeOpen: 1, wide: 1, duration: 0.55, ease: "back.out(1.4)" })
+    // tilt, watching
+    .to(d, { headTiltZ: hideDir * (14 * Math.PI) / 180, duration: 0.4, ease: "power2.out" })
+    .to(d, { wide: 0.55, happy: 0.5, duration: 0.5, ease: "sine.inOut" })
+    .to(d, {}, "+=0.9") // hold the stare
+    // duck back out of sight
+    .to(d, { offsetX: off, wide: 0, happy: 0, eyeOpen: 0.4, headTiltZ: 0, duration: 0.45, ease: "power2.in" });
+  return tl;
+};
+
+/** Held by the user: eyes wide, body stiffens, ambient float suspended. */
+export const dragging: Builder = (d) => {
+  const tl = gsap.timeline();
+  tl.to(d, {
+    eyeOpen: 1,
+    wide: 1,
+    happy: 0,
+    narrow: 0,
+    sad: 0,
+    angry: 0,
+    heat: 0,
+    shake: 0,
+    headTiltZ: 0,
+    bob: 0, // stop floating — it's being carried
+    sinkY: 0,
+    scale: 1.06,
+    accentIntensity: 1.5,
+    duration: 0.22,
+    ease: "power3.out",
+    overwrite: "auto",
+  });
+  return tl;
+};
+
+/**
+ * Annoyed. Brows down, colour runs hot, and a tremble that decays — a sulk
+ * that settles rather than a loop, so it never nags.
+ */
+export const annoyed: Builder = (d) => {
+  const tl = gsap.timeline();
+  tl.to(
+    d,
+    {
+      eyeOpen: 1,
+      angry: 1,
+      narrow: 0.45,
+      happy: 0,
+      wide: 0,
+      sad: 0,
+      heat: 1,
+      headTiltZ: (-7 * Math.PI) / 180,
+      bob: 0.8,
+      scale: 1.03,
+      accentIntensity: 1.7,
+      logoIntensity: 1.5,
+      duration: 0.18,
+      ease: "power3.out",
+      overwrite: "auto",
+    },
+    0,
+  );
+  // a sharp shudder that dies away
+  tl.fromTo(d, { shake: 1 }, { shake: 0, duration: 1.1, ease: "power2.out" }, 0.05);
+  // huff: a few quick nods
+  tl.to(
+    d,
+    { headTiltZ: (7 * Math.PI) / 180, duration: 0.12, yoyo: true, repeat: 3, ease: "sine.inOut" },
+    0.05,
+  );
+  // cool off, but stay a little narrow-eyed about it
+  tl.to(d, { heat: 0.22, angry: 0.45, accentIntensity: 1.2, duration: 1.2, ease: "power1.inOut" }, 1.3);
+  return tl;
+};
+
+/** Dismissed: slides off the nearest edge and stays gone until it peeks. */
+export const hiding: Builder = (d, hideDir = 1) => {
+  const tl = gsap.timeline();
+  tl.to(d, {
+    offsetX: 2.4 * hideDir,
+    eyeOpen: 0.45,
+    wide: 0,
+    happy: 0,
+    narrow: 0.3,
+    angry: 0,
+    heat: 0,
+    shake: 0,
+    bob: 0.4,
+    scale: 1,
+    accentIntensity: 0.8,
+    logoIntensity: 0.6,
+    duration: 0.42,
+    ease: "power2.in",
+    overwrite: "auto",
+  });
   return tl;
 };
 
@@ -297,4 +397,7 @@ export const BUILDERS: Record<MascotState, Builder> = {
   sleepy,
   asleep,
   peeking,
+  dragging,
+  annoyed,
+  hiding,
 };

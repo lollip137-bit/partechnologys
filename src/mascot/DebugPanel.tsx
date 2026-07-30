@@ -13,6 +13,9 @@ const STICKY: MascotState[] = [
   "speaking",
   "sleepy",
   "asleep",
+  "annoyed",
+  "dragging",
+  "hiding",
 ];
 /**
  * Hidden dev panel, shown only with `?debug=mascot` (brief phase 3). A button

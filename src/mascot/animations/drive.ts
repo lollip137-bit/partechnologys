@@ -17,8 +17,14 @@ export interface Drive {
   wide: number; // wide / curious
   narrow: number; // narrow / focused
   sad: number; // flat / disappointed
+  angry: number; // inner brows down — annoyed / cross
   /** How strongly the eyes slide toward the look direction, 0..1. */
   lookInfluence: number;
+
+  /** Irritated tremble, 0..1. Scales a fast positional jitter. */
+  shake: number;
+  /** How far the eye colour shifts from accent toward hot amber, 0..1. */
+  heat: number;
 
   /** Extra head tilt on Z, radians (curious = ~12°). */
   headTiltZ: number;
@@ -53,7 +59,10 @@ export function createDrive(): Drive {
     wide: 0,
     narrow: 0,
     sad: 0,
+    angry: 0,
     lookInfluence: 1,
+    shake: 0,
+    heat: 0,
     headTiltZ: 0,
     bob: 1,
     sinkY: 0,

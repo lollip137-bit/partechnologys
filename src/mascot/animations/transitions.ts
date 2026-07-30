@@ -18,6 +18,9 @@ export class TransitionManager {
   private active: gsap.core.Timeline | null = null;
   private activeState: MascotState | null = null;
 
+  /** Screen edge PARi hid behind: -1 left, +1 right. Set before hiding. */
+  hideDir = 1;
+
   constructor(drive: Drive) {
     this.drive = drive;
   }
@@ -29,7 +32,7 @@ export class TransitionManager {
     // are overwritten by the new builder, but a yoyo/repeat:-1 tween must be
     // stopped explicitly or it keeps running forever.
     if (this.active) this.active.kill();
-    this.active = BUILDERS[state](this.drive);
+    this.active = BUILDERS[state](this.drive, this.hideDir);
     this.activeState = state;
   }
 
