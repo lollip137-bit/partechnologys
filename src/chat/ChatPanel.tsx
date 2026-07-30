@@ -177,6 +177,21 @@ export function ChatPanel({
                     Talk to the team →
                   </button>
                 )}
+                {m.leadCaptured && !m.pending && (
+                  <span style={leadBadge}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden focusable="false">
+                      <path
+                        d="M2 6.2 L4.6 8.8 L10 3"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                    </svg>
+                    Sent to the team
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -341,6 +356,20 @@ const contactBtn: React.CSSProperties = {
   color: "#04121C",
   border: "none",
   letterSpacing: "0.01em",
+};
+
+const leadBadge: React.CSSProperties = {
+  marginTop: 7,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 5,
+  padding: "5px 11px",
+  borderRadius: 999,
+  fontSize: 11.5,
+  fontWeight: 600,
+  color: "#8FF7C4",
+  background: "rgba(52, 211, 153, 0.12)",
+  border: "1px solid rgba(52, 211, 153, 0.3)",
 };
 
 const formStyle: React.CSSProperties = {

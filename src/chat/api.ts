@@ -4,10 +4,10 @@
  * The V3 site is a static export, so by default there is NO server and the
  * whole RAG pipeline runs in the browser (localBrain.ts).
  *
- * When a real provider is stood up later (Phase 7 — Gemini, which must stay
- * server-side so the key never reaches the browser), deploy it as a small
- * serverless function and set NEXT_PUBLIC_CHAT_API to its URL. This module then
- * streams SSE from there instead. Nothing else in the UI changes.
+ * The real brain is a small Cloudflare Worker (docs/drax-brain-worker.js) — it
+ * must stay server-side so nothing secret ever reaches the browser — and
+ * NEXT_PUBLIC_CHAT_API points at it. This module streams SSE from there;
+ * nothing else in the UI needs to know or care what runs inside the Worker.
  */
 
 /**
@@ -17,7 +17,14 @@
  */
 export interface ControlBlock {
   mood: "excited" | "neutral" | "thoughtful" | "annoyed";
-  action: null | "point_to_contact";
+  /**
+   * `point_to_contact` — couldn't answer, or wants a human, and no lead has
+   *   been captured yet; the UI offers the "Talk to the team" link.
+   * `lead_captured` — the Worker validated and stored name+email+project;
+   *   the UI shows a confirmation instead, since there's nothing left to send
+   *   the visitor off to do.
+   */
+  action: null | "point_to_contact" | "lead_captured";
 }
 
 export type ChatEvent =

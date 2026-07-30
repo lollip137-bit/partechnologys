@@ -12,6 +12,8 @@ export interface ChatMsg {
   pending?: boolean;
   /** set when the reply suggests pointing the visitor at the contact form. */
   pointToContact?: boolean;
+  /** set when the Worker validated and stored a lead from this reply. */
+  leadCaptured?: boolean;
 }
 
 interface ChatStore {
@@ -145,6 +147,7 @@ export const useChat = create<ChatStore>((set, get) => ({
             mascot.setMood(MOOD_MAP[ev.control.mood] ?? "neutral");
             reaction = MOOD_REACTION[ev.control.mood] ?? null;
             if (ev.control.action === "point_to_contact") finishAssistant({ pointToContact: true });
+            if (ev.control.action === "lead_captured") finishAssistant({ leadCaptured: true });
           } else if (ev.type === "error") {
             // Degrade to a static fallback; Body keeps running (brief §7).
             if (!get().messages.find((m) => m.id === asstId)?.content) {
