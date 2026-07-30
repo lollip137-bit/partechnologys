@@ -59,6 +59,10 @@ function MockupCard({ m, onOpen }: { m: Mockup; onOpen: (t: ReelTarget) => void 
   const [hover, setHover] = useState(false);
   const playable = Boolean(m.reel);
 
+  // The cursor tilt comes from PageShell's single delegated mousemove listener,
+  // which sets `--tilt` on anything matching its selector list — one listener
+  // for the whole page instead of a React handler per card. `.mcard` and
+  // `.dcard` were simply missing from that list.
   return (
     <article
       className={`mcard ${playable ? 'is-clickable' : ''}`}

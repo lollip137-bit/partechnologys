@@ -15,16 +15,21 @@ export default function PageShell({ kicker, title, sub, children }: {
 
   useEffect(() => {
     const els = Array.from(root.current?.querySelectorAll<HTMLElement>('[data-a]') ?? []);
+    // threshold 0.01, not 0.15: requiring 15% of an element to be visible is
+    // unreliable for anything TALL — a tall block straddling the fold can sit
+    // there permanently unrevealed, i.e. `opacity: 0`, i.e. a blank gap on a
+    // live page. Since this observer also unobserves on first hit, that state
+    // never recovers. A hair over zero still animates on entry and cannot fail.
     const io = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) { entry.target.classList.add('in'); io.unobserve(entry.target); }
       }
-    }, { threshold: 0.15 });
+    }, { threshold: 0.01, rootMargin: '0px 0px -2% 0px' });
     els.forEach((el, i) => { el.style.transitionDelay = `${(i % 6) * 60}ms`; io.observe(el); });
 
     // the 3D language carries onto every inner page
     const el = root.current;
-    const SEL = '.svc-card, .ind-card, .quote-card, .eng-card, .ins-card, .pwin, .art-card, .svc-branch, .contact-fact, .flow-dot';
+    const SEL = '.svc-card, .ind-card, .quote-card, .eng-card, .ins-card, .pwin, .art-card, .svc-branch, .contact-fact, .flow-dot, .mcard, .dcard';
     const onMove = (e: MouseEvent) => {
       const card = (e.target as HTMLElement).closest?.(SEL) as HTMLElement | null;
       if (!card) return;

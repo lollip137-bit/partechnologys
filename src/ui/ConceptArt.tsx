@@ -197,10 +197,35 @@ function ellipse(cx: number, cy: number, rx: number, ry: number) {
   return `M${q(cx - rx)} ${q(cy)} a${q(rx)} ${q(ry)} 0 1 0 ${q(rx * 2)} 0 a${q(rx)} ${q(ry)} 0 1 0 ${q(-rx * 2)} 0`;
 }
 
+/**
+ * Depth band for a dot, from its own size. Bigger, brighter motes read as
+ * nearer, so grouping by radius gives three genuine parallax planes rather
+ * than an arbitrary scatter — the layers can then drift at different rates.
+ */
+function bandOf(d: Dot) {
+  return d.r >= 1.4 ? 2 : d.r >= 0.9 ? 1 : 0;
+}
+
 export default function ConceptArt({ kind }: { kind: Kind }) {
   const { dots, paths } = useMemo(() => build(kind), [kind]);
+  // Motion is applied to these FOUR groups, never to individual dots. A card
+  // can hold 700+ circles; animating each one would be hundreds of animated
+  // nodes per card. Transforming a handful of <g> wrappers gets the same
+  // parallax for a fixed, tiny cost.
+  const bands = useMemo(() => {
+    const out: Dot[][] = [[], [], []];
+    for (const d of dots) out[bandOf(d)].push(d);
+    return out;
+  }, [dots]);
+
   return (
-    <svg className="concept-art" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${kind} design concept`} preserveAspectRatio="xMidYMid slice">
+    <svg
+      className={`concept-art ca-${kind}`}
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-label={`${kind} design concept`}
+      preserveAspectRatio="xMidYMid slice"
+    >
       <defs>
         <radialGradient id={`cg-${kind}`} cx="50%" cy="45%" r="70%">
           <stop offset="0%" stopColor="#0A1936" stopOpacity="0.85" />
@@ -208,11 +233,17 @@ export default function ConceptArt({ kind }: { kind: Kind }) {
         </radialGradient>
       </defs>
       <rect width={W} height={H} fill={`url(#cg-${kind})`} />
-      {paths.map((p, i) => (
-        <path key={`p${i}`} d={p.d} fill="none" stroke={BLUE} strokeOpacity={p.o} strokeWidth={p.w} strokeLinecap="round" />
-      ))}
-      {dots.map((d, i) => (
-        <circle key={`d${i}`} cx={d.x} cy={d.y} r={d.r} fill={d.c} fillOpacity={Math.min(1, d.o * 1.45)} />
+      <g className="ca-paths">
+        {paths.map((p, i) => (
+          <path key={`p${i}`} d={p.d} fill="none" stroke={BLUE} strokeOpacity={p.o} strokeWidth={p.w} strokeLinecap="round" />
+        ))}
+      </g>
+      {bands.map((band, b) => (
+        <g key={`b${b}`} className={`ca-dots ca-b${b}`}>
+          {band.map((d, i) => (
+            <circle key={`d${i}`} cx={d.x} cy={d.y} r={d.r} fill={d.c} fillOpacity={Math.min(1, d.o * 1.45)} />
+          ))}
+        </g>
       ))}
     </svg>
   );

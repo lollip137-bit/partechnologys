@@ -175,7 +175,21 @@
   transition: opacity 0.8s var(--ease-lux), transform 0.9s var(--ease-lux), filter 0.8s var(--ease-lux);
   will-change: opacity, transform, filter;
 }
-[data-a].in { opacity: 1; transform: none; filter: blur(0); }
+/* Yields the transform to `--tilt` once revealed, instead of hard-setting
+   `none`. This selector is 0,2,0 and every card that wants the cursor-tilt is
+   only 0,1,0 (`.svc-card { transform: var(--tilt, none) }`), so the old `none`
+   silently WON and the hover-3D that PageShell sets up never actually applied to
+   any card carrying data-a — which is most of them. The `none` fallback keeps
+   behaviour identical for the elements that never set --tilt.
+   `will-change` is also dropped after the entrance: keeping opacity/transform/
+   filter promoted forever on every revealed element costs memory for an
+   animation that has already finished. */
+[data-a].in {
+  opacity: 1;
+  transform: var(--tilt, none);
+  filter: blur(0);
+  will-change: auto;
+}
 
 /* ============ LIQUID-GLASS SITE ENTRY ============ */
 .site-entry {
