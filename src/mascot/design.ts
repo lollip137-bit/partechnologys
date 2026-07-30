@@ -1,9 +1,9 @@
 /**
- * PARi — LOCKED DESIGN SPEC (PAR Technologys V3)
+ * Drax — LOCKED DESIGN SPEC (PAR Technologys V3)
  * ----------------------------------------------------------------------------
  * Single source of truth for the mascot's look & motion feel.
  *
- * Character: PARi — PAR Technologys' floating AI companion.
+ * Character: Drax — PAR Technologys' floating AI companion.
  *
  * Silhouette (COMMITTED):
  *   - Detached head (rounded, slightly flattened dome) hovering just above a

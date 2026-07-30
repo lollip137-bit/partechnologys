@@ -11,14 +11,14 @@ export interface Placement extends MascotBox {
   /** Top-left of the mascot box, in viewport px (position: fixed). */
   x: number;
   y: number;
-  /** Which half of the screen PARi is on: -1 left, +1 right. Drives hide/peek. */
+  /** Which half of the screen Drax is on: -1 left, +1 right. Drives hide/peek. */
   side: -1 | 1;
 }
 
 const DESKTOP: MascotBox = { width: 210, height: 240 };
 const MOBILE: MascotBox = { width: 116, height: 132 };
 const MARGIN = 16;
-const STORAGE_KEY = "pari.pos";
+const STORAGE_KEY = "drax.pos";
 
 /* ------------------------------------------------------------------ *
  * Finding empty space
@@ -37,8 +37,8 @@ function pointIsOccupied(x: number, y: number): boolean {
   const el = document.elementFromPoint(x, y) as HTMLElement | null;
   if (!el) return false;
 
-  // Ignore PARi's own chrome.
-  if (el.closest("[data-pari-launcher],[data-pari-panel],[data-pari-canvas]")) return false;
+  // Ignore Drax's own chrome.
+  if (el.closest("[data-drax-launcher],[data-drax-panel],[data-drax-canvas]")) return false;
 
   const tag = el.tagName;
   if (tag === "HTML" || tag === "BODY" || tag === "CANVAS") return false;
@@ -134,12 +134,12 @@ export interface UseMascotPlacement {
 }
 
 /**
- * Owns where PARi sits.
+ * Owns where Drax sits.
  *
  * Two rules:
- *  1. The user always wins. Once PARi has been dragged, that position is kept
+ *  1. The user always wins. Once Drax has been dragged, that position is kept
  *     (and persisted), and auto-placement never overrides it.
- *  2. Otherwise PARi keeps out of the way — on mount, on resize and on route
+ *  2. Otherwise Drax keeps out of the way — on mount, on resize and on route
  *     change it samples candidate corners and moves to the emptiest one, so it
  *     stops sitting on top of the page's own content.
  */
@@ -265,7 +265,7 @@ export function useMascotPlacement(
             }
             return p;
           });
-          // a hard fling annoys PARi; a gentle move doesn't
+          // a hard fling annoys Drax; a gentle move doesn't
           cbEnd.current?.(speed > 1.1);
         }
       };

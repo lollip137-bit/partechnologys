@@ -13,9 +13,9 @@ import { normalizedCenter } from "./lookAtElement";
  *   [data-mascot="cta"]      cursor < 120px -> anticipating (handled in cursorTracking)
  *   [data-mascot="form"]     submit         -> celebrate
  *
- * Also installs `window.PARi` for imperative control (chat wires open/close in).
+ * Also installs `window.Drax` for imperative control (chat wires open/close in).
  */
-export interface PariApi {
+export interface DraxApi {
   celebrate: () => void;
   open?: () => void;
   close?: () => void;
@@ -23,7 +23,7 @@ export interface PariApi {
 
 declare global {
   interface Window {
-    PARi?: PariApi;
+    Drax?: DraxApi;
   }
 }
 
@@ -107,10 +107,10 @@ export function startBehaviors(): () => void {
   cleanups.push(() => document.removeEventListener("submit", onSubmit, true));
 
   // --- imperative API -------------------------------------------------------
-  const api: PariApi = { ...(window.PARi ?? {}), celebrate };
-  window.PARi = api;
+  const api: DraxApi = { ...(window.Drax ?? {}), celebrate };
+  window.Drax = api;
   cleanups.push(() => {
-    if (window.PARi === api) delete window.PARi;
+    if (window.Drax === api) delete window.Drax;
   });
 
   return () => cleanups.forEach((c) => c());

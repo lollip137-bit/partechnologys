@@ -10,8 +10,13 @@
  * streams SSE from there instead. Nothing else in the UI changes.
  */
 
+/**
+ * The reaction the model sends back alongside its words. `mood` drives a
+ * visible expression on the mascot for a beat after it finishes answering, so
+ * every question gets a physical response and not just text.
+ */
 export interface ControlBlock {
-  mood: "excited" | "neutral" | "thoughtful";
+  mood: "excited" | "neutral" | "thoughtful" | "annoyed";
   action: null | "point_to_contact";
 }
 

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 /**
- * Client-only mount for PARi.
+ * Client-only mount for Drax.
  *
  * Nothing about a floating 3D companion should be server-rendered: it reads
  * window size, localStorage (saved position, session id) and the live page

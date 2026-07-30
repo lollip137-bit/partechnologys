@@ -15,7 +15,7 @@ import { useMascotPlacement } from "./useMascotPlacement";
 // this split so three.js loads as its own chunk after first paint.
 const Mascot = dynamic(() => import("./Mascot").then((m) => m.Mascot), { ssr: false });
 
-/** How long PARi sulks off-screen before peeking back in. */
+/** How long Drax sulks off-screen before peeking back in. */
 const PEEK_DELAY_MS = 4200;
 /** Length of the peek animation before it ducks away again. */
 const PEEK_DURATION_MS = 3400;
@@ -25,10 +25,10 @@ const PEEK_REPEAT_MS = 11000;
 /**
  * The single mount point for the whole companion.
  *
- * PARi IS the chat button — no separate bubble icon. A transparent accessible
+ * Drax IS the chat button — no separate bubble icon. A transparent accessible
  * <button> sits over the mascot and the panel opens beside it.
  *
- * PARi can be dragged anywhere, and remembers where you put it. Left alone, it
+ * Drax can be dragged anywhere, and remembers where you put it. Left alone, it
  * keeps itself out of the way by moving to the emptiest corner of the page.
  *
  * Dismiss it with the ✕ and it doesn't just vanish: it slides off the nearest
@@ -75,7 +75,7 @@ export function MascotRoot() {
     ),
   );
 
-  // PARi hides toward whichever edge it's nearest.
+  // Drax hides toward whichever edge it's nearest.
   useEffect(() => {
     setHideDir(placement.side);
   }, [placement.side, setHideDir]);
@@ -90,19 +90,19 @@ export function MascotRoot() {
       started.current = true;
       const stop = startBehaviors();
       fire("boot", 1800);
-      window.PARi = {
-        ...(window.PARi ?? { celebrate: () => {} }),
+      window.Drax = {
+        ...(window.Drax ?? { celebrate: () => {} }),
         open: openPanel,
         close: closePanel,
       };
 
       let hintTimer: ReturnType<typeof setTimeout> | undefined;
       try {
-        if (!localStorage.getItem("pari.hintSeen")) {
+        if (!localStorage.getItem("drax.hintSeen")) {
           setHintSeen(false);
           hintTimer = setTimeout(() => {
             setHintSeen(true);
-            localStorage.setItem("pari.hintSeen", "1");
+            localStorage.setItem("drax.hintSeen", "1");
           }, 9000);
         }
       } catch {
@@ -129,7 +129,7 @@ export function MascotRoot() {
    * Both states are held on the SAME `dismiss` source and swapped, rather than
    * firing the peek as a one-shot. A one-shot would be resolved against
    * `hiding`, which deliberately outranks almost everything so idle timers
-   * can't drag PARi back on screen — and it would therefore swallow the peek
+   * can't drag Drax back on screen — and it would therefore swallow the peek
    * entirely. Same source = a clean swap, no priority fight.
    */
   const startPeekCycle = useCallback(() => {
@@ -150,9 +150,9 @@ export function MascotRoot() {
     schedule(PEEK_DELAY_MS);
   }, [hold, clearPeekTimers]);
 
-  /** The ✕ (or an outside click): PARi withdraws behind the edge and peeks. */
+  /** The ✕ (or an outside click): Drax withdraws behind the edge and peeks. */
   const dismiss = useCallback(() => {
-    // interrupting PARi mid-sentence is rude — it notices
+    // interrupting Drax mid-sentence is rude — it notices
     const interrupted = streaming;
     closePanel();
     setDismissed(true);
@@ -161,7 +161,7 @@ export function MascotRoot() {
     startPeekCycle();
   }, [closePanel, hold, startPeekCycle, streaming, getAnnoyed]);
 
-  /** Bring PARi back from behind the edge. */
+  /** Bring Drax back from behind the edge. */
   const recall = useCallback(() => {
     clearPeekTimers();
     setDismissed(false);
@@ -174,7 +174,7 @@ export function MascotRoot() {
     if (hintSeen) return;
     setHintSeen(true);
     try {
-      localStorage.setItem("pari.hintSeen", "1");
+      localStorage.setItem("drax.hintSeen", "1");
     } catch {
       /* ignore */
     }
@@ -185,7 +185,7 @@ export function MascotRoot() {
     if (wasDragged()) return;
     dismissHint();
 
-    // poke detection: 4+ clicks inside 2s and PARi has had enough
+    // poke detection: 4+ clicks inside 2s and Drax has had enough
     const now = Date.now();
     pokes.current = [...pokes.current.filter((t) => now - t < 2000), now];
     if (pokes.current.length >= 4) {
@@ -215,17 +215,17 @@ export function MascotRoot() {
   return (
     <>
       <style>{`
-        @keyframes pari-blink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes pari-hint-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-        [data-pari-launcher]:focus-visible { outline: 2px solid #00C2FF; outline-offset: 4px; border-radius: 18px; }
+        @keyframes drax-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes drax-hint-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+        [data-drax-launcher]:focus-visible { outline: 2px solid #00C2FF; outline-offset: 4px; border-radius: 18px; }
       `}</style>
 
       <Mascot onFps={setFps} placement={placement} />
 
-      {/* PARi IS the button: transparent, sits exactly over the mascot, drags. */}
+      {/* Drax IS the button: transparent, sits exactly over the mascot, drags. */}
       <button
         type="button"
-        data-pari-launcher=""
+        data-drax-launcher=""
         onPointerDown={onPointerDown}
         onClick={handleClick}
         onMouseEnter={() => {
@@ -238,10 +238,10 @@ export function MascotRoot() {
         }}
         aria-label={
           dismissed
-            ? "Bring PARi back"
+            ? "Bring Drax back"
             : chatOpen
-              ? "Close chat with PARi"
-              : "Chat with PARi, the PAR Technologys assistant. Drag to move."
+              ? "Close chat with Drax"
+              : "Chat with Drax, the PAR Technologys assistant. Drag to move."
         }
         aria-expanded={chatOpen}
         style={{
@@ -278,7 +278,7 @@ export function MascotRoot() {
             boxShadow: "0 6px 20px rgba(0,0,0,0.45)",
             opacity: chatOpen || isDragging ? 0 : hovered || !hintSeen || dismissed ? 1 : 0,
             transition: "opacity 240ms ease",
-            animation: !hintSeen ? "pari-hint-in 420ms ease both" : undefined,
+            animation: !hintSeen ? "drax-hint-in 420ms ease both" : undefined,
             pointerEvents: "none",
           }}
         >

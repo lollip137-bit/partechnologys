@@ -18,7 +18,7 @@ export class TransitionManager {
   private active: gsap.core.Timeline | null = null;
   private activeState: MascotState | null = null;
 
-  /** Screen edge PARi hid behind: -1 left, +1 right. Set before hiding. */
+  /** Screen edge Drax hid behind: -1 left, +1 right. Set before hiding. */
   hideDir = 1;
 
   constructor(drive: Drive) {

@@ -1,5 +1,5 @@
 /**
- * PARi's knowledge base — browser-native.
+ * Drax's knowledge base — browser-native.
  *
  * The V3 site is a STATIC EXPORT (next.config.mjs `output: 'export'`), so there
  * is no Node process and no API route to run retrieval on. The corpus is tiny,

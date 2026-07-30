@@ -6,7 +6,7 @@ import { useChat } from "./useChat";
 
 /**
  * Chat panel. Anchored directly above the mascot so the two read as ONE object:
- * PARi is the button, this is PARi talking. framer-motion for the DOM UI only.
+ * Drax is the button, this is Drax talking. framer-motion for the DOM UI only.
  *
  * Fully keyboard + screen-reader usable and NOT aria-hidden (the 3D mascot is).
  * The typing indicator is the mascot's own `thinking` state — deliberately no
@@ -27,7 +27,7 @@ const PANEL_H = 460;
 const GAP = 12;
 
 /**
- * Place the panel next to PARi and always fully on screen: prefer above, flip
+ * Place the panel next to Drax and always fully on screen: prefer above, flip
  * below if there's no room, and align to whichever side keeps it in view.
  */
 function anchorPanel(a: PanelAnchor) {
@@ -36,14 +36,14 @@ function anchorPanel(a: PanelAnchor) {
   const w = Math.min(PANEL_W, vw - 2 * GAP);
   const h = Math.min(PANEL_H, vh - 2 * GAP);
 
-  // vertical: above PARi if it fits, else below, else pinned in view
+  // vertical: above Drax if it fits, else below, else pinned in view
   let top = a.y - h - GAP;
   if (top < GAP) {
     const below = a.y + a.height + GAP;
     top = below + h <= vh - GAP ? below : Math.max(GAP, vh - h - GAP);
   }
 
-  // horizontal: align the panel's near edge with PARi, then clamp
+  // horizontal: align the panel's near edge with Drax, then clamp
   let left = a.side === 1 ? a.x + a.width - w : a.x;
   left = Math.max(GAP, Math.min(left, vw - w - GAP));
 
@@ -80,7 +80,7 @@ export function ChatPanel({
   // dismisses it — both are what people expect from a chat bubble.
   useEffect(() => {
     if (!open) return;
-    // Escape just closes the panel; it is not a rejection of PARi, so it does
+    // Escape just closes the panel; it is not a rejection of Drax, so it does
     // NOT trigger the hide-and-peek sulk. Only the ✕ does that.
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") closePanel();
@@ -88,7 +88,7 @@ export function ChatPanel({
     const onDown = (e: MouseEvent) => {
       const t = e.target as HTMLElement;
       if (panelRef.current?.contains(t)) return;
-      if (t.closest?.("[data-pari-launcher]")) return; // the mascot toggles itself
+      if (t.closest?.("[data-drax-launcher]")) return; // the mascot toggles itself
       closePanel();
     };
     window.addEventListener("keydown", onKey);
@@ -118,26 +118,26 @@ export function ChatPanel({
       {open && (
         <motion.div
           ref={panelRef}
-          data-pari-panel=""
+          data-drax-panel=""
           role="dialog"
-          aria-label="Chat with PARi, the PAR Technologys assistant"
+          aria-label="Chat with Drax, the PAR Technologys assistant"
           initial={{ opacity: 0, y: 18, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 12, scale: 0.97 }}
           transition={{ type: "spring", stiffness: 340, damping: 32 }}
-          // follows PARi wherever it has been dragged, always kept on screen
+          // follows Drax wherever it has been dragged, always kept on screen
           style={{ ...panelStyle, ...anchorPanel(placement) }}
         >
           <header style={headerStyle}>
             <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
               <span aria-hidden style={dotStyle} />
-              <strong style={{ color: "#F3F6FA", letterSpacing: "0.01em" }}>PARi</strong>
+              <strong style={{ color: "#F3F6FA", letterSpacing: "0.01em" }}>Drax</strong>
               <span style={subtleLabel}>PAR TECHNOLOGYS</span>
             </span>
             <button
               type="button"
-              aria-label="Dismiss PARi"
-              title="Dismiss — PARi will wait at the edge"
+              aria-label="Dismiss Drax"
+              title="Dismiss — Drax will wait at the edge"
               onClick={onDismiss}
               style={closeBtn}
               onMouseEnter={(e) => {
@@ -167,7 +167,7 @@ export function ChatPanel({
                 style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "88%" }}
               >
                 <div style={m.role === "user" ? userBubble : asstBubble}>
-                  <span style={srOnly}>{m.role === "user" ? "You said:" : "PARi said:"}</span>
+                  <span style={srOnly}>{m.role === "user" ? "You said:" : "Drax said:"}</span>
                   {m.content}
                   {m.pending && !m.content && <span aria-hidden style={{ opacity: 0.55 }}>…</span>}
                   {m.pending && m.content && <span aria-hidden style={caret}>▍</span>}
@@ -182,11 +182,11 @@ export function ChatPanel({
           </div>
 
           <form onSubmit={onSubmit} style={formStyle}>
-            <label htmlFor="pari-input" style={srOnly}>
-              Message PARi
+            <label htmlFor="drax-input" style={srOnly}>
+              Message Drax
             </label>
             <input
-              id="pari-input"
+              id="drax-input"
               ref={inputRef}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -233,7 +233,7 @@ const srOnly: React.CSSProperties = {
 
 const panelStyle: React.CSSProperties = {
   position: "fixed",
-  // left/top/width/height come from anchorPanel(), which tracks PARi
+  // left/top/width/height come from anchorPanel(), which tracks Drax
   display: "flex",
   flexDirection: "column",
   borderRadius: 16,
@@ -327,7 +327,7 @@ const userBubble: React.CSSProperties = {
 const caret: React.CSSProperties = {
   marginLeft: 2,
   opacity: 0.85,
-  animation: "pari-blink 1s steps(2) infinite",
+  animation: "drax-blink 1s steps(2) infinite",
 };
 
 const contactBtn: React.CSSProperties = {

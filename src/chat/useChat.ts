@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { mascotStore, type Mood } from "@/mascot/useMascotState";
+import { mascotStore, type MascotState, type Mood } from "@/mascot/useMascotState";
 import { RateLimitedError, streamChat, type WireMessage } from "./api";
 
 export interface ChatMsg {
@@ -28,7 +28,7 @@ interface ChatStore {
 
 function newSessionId(): string {
   if (typeof window === "undefined") return "server";
-  const KEY = "pari.sessionId";
+  const KEY = "drax.sessionId";
   let id = localStorage.getItem(KEY);
   if (!id) {
     id = "s_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -41,6 +41,19 @@ const MOOD_MAP: Record<string, Mood> = {
   excited: "excited",
   neutral: "neutral",
   thoughtful: "thoughtful",
+  annoyed: "disappointed",
+};
+
+/**
+ * The physical reaction each mood produces once Drax finishes answering.
+ * Every question gets one, so the mascot visibly responds rather than just
+ * printing text. `neutral` is deliberately absent — settling calmly back to
+ * idle IS the neutral reaction, and firing a state for it would look twitchy.
+ */
+const MOOD_REACTION: Record<string, { state: MascotState; ms: number }> = {
+  excited: { state: "excited", ms: 1400 },
+  thoughtful: { state: "curious", ms: 1600 },
+  annoyed: { state: "annoyed", ms: 2200 },
 };
 
 const uid = () => Math.random().toString(36).slice(2);
@@ -52,7 +65,7 @@ export const useChat = create<ChatStore>((set, get) => ({
       id: "greet",
       role: "assistant",
       content:
-        "Hi — I'm PARi, PAR Technologys' assistant. Ask me what we build, how long a project takes, or how we price.",
+        "Hi — I'm Drax, PAR Technologys' assistant. Ask me what we build, how long a project takes, or how we price.",
     },
   ],
   streaming: false,
@@ -114,6 +127,8 @@ export const useChat = create<ChatStore>((set, get) => ({
     const MAX_ATTEMPTS = 3;
     let attempt = 0;
     let firstToken = true;
+    /** The expression to play once Drax has finished speaking. */
+    let reaction: { state: MascotState; ms: number } | null = null;
 
     while (attempt < MAX_ATTEMPTS) {
       try {
@@ -128,6 +143,7 @@ export const useChat = create<ChatStore>((set, get) => ({
             mascot.setMood(mascotStore.getState().mood);
           } else if (ev.type === "control") {
             mascot.setMood(MOOD_MAP[ev.control.mood] ?? "neutral");
+            reaction = MOOD_REACTION[ev.control.mood] ?? null;
             if (ev.control.action === "point_to_contact") finishAssistant({ pointToContact: true });
           } else if (ev.type === "error") {
             // Degrade to a static fallback; Body keeps running (brief §7).
@@ -163,7 +179,12 @@ export const useChat = create<ChatStore>((set, get) => ({
 
     finishAssistant();
     set({ streaming: false });
-    // settle mascot back to idle shortly after speaking ends
-    setTimeout(() => mascotStore.getState().hold("chat", null), 400);
+    // Release `speaking`, then play the reaction the answer earned. Firing it
+    // as a one-shot means it settles back to idle on its own.
+    setTimeout(() => {
+      const m = mascotStore.getState();
+      m.hold("chat", null);
+      if (reaction) m.fire(reaction.state, reaction.ms);
+    }, 400);
   },
 }));

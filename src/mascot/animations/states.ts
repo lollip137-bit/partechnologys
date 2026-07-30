@@ -17,7 +17,7 @@ const DUR = 0.55; // default transition seconds
 const EASE = "power2.out";
 
 /**
- * `hideDir` is the screen edge PARi hid behind (-1 left, +1 right); only the
+ * `hideDir` is the screen edge Drax hid behind (-1 left, +1 right); only the
  * hide/peek pair use it, so every other builder simply ignores it.
  */
 type Builder = (d: Drive, hideDir?: number) => gsap.core.Timeline;
@@ -278,7 +278,7 @@ export const asleep: Builder = (d) => {
 
 /**
  * Peeks back in from the edge it hid behind, watches you for a moment, then
- * ducks out again. `hideDir` is the screen edge PARi went behind (-1 left,
+ * ducks out again. `hideDir` is the screen edge Drax went behind (-1 left,
  * +1 right) so it always returns from the same side it left.
  */
 export const peeking: Builder = (d, hideDir = 1) => {

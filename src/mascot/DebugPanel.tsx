@@ -56,7 +56,7 @@ export function DebugPanel({ fps }: { fps: number }) {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-        <strong style={{ color: "#22c55e" }}>PARi debug</strong>
+        <strong style={{ color: "#22c55e" }}>Drax debug</strong>
         <span>{fps.toFixed(0)} fps</span>
       </div>
       <div style={{ marginBottom: 8, opacity: 0.85 }}>

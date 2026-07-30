@@ -2,7 +2,7 @@ import { KNOWLEDGE } from "./knowledge";
 import type { ChatEvent, WireMessage } from "./api";
 
 /**
- * PARi's Brain, running in the browser.
+ * Drax's Brain, running in the browser.
  *
  * The site is a static export, so there is no server to retrieve on. The corpus
  * is ~10 short chunks, so the full pipeline (embed → cosine top-k → similarity
@@ -113,6 +113,43 @@ function compose(hits: Retrieved[], question: string): string {
   return sentences.slice(0, wantsDetail ? 4 : 3).join(" ");
 }
 
+/**
+ * Off-topic replies. Drax stays in character: it only knows PAR Technologys,
+ * but it reacts to being asked something else rather than emitting the same
+ * flat refusal every time. Each carries its own mood so the mascot's face
+ * matches what it just said.
+ */
+const OFF_TOPIC: { test: RegExp; mood: "thoughtful" | "annoyed" | "excited"; reply: string }[] = [
+  {
+    // greetings and pleasantries
+    test: /^\s*(hi|hey|hello|yo|good (morning|afternoon|evening)|how are you|what'?s up)\b/i,
+    mood: "excited",
+    reply:
+      "Hello. I'm Drax — I look after questions about PAR Technologys. Ask me what we build, how long things take, or how we price.",
+  },
+  {
+    // asking what Drax itself is
+    test: /\b(who|what) are you\b|\byour name\b|\bare you (a )?(bot|ai|robot|human|real)\b/i,
+    mood: "excited",
+    reply:
+      "I'm Drax, PAR Technologys' assistant. I only know this company — so I'll be genuinely useful about our work, and useless about almost everything else.",
+  },
+  {
+    // rude / testing the boundaries
+    test: /\b(stupid|dumb|useless|idiot|shut up|suck|hate you|rubbish|trash)\b/i,
+    mood: "annoyed",
+    reply:
+      "Noted. I'm still only going to be helpful about PAR Technologys — ask me something about the work and I'll do better.",
+  },
+  {
+    // trying to get it to be a general-purpose assistant
+    test: /\b(write|generate|code|poem|joke|story|recipe|essay|translate|summari[sz]e)\b/i,
+    mood: "annoyed",
+    reply:
+      "That's not what I'm for — I'm the PAR Technologys assistant, not a general-purpose one. Ask me about our services, process, timelines or pricing.",
+  },
+];
+
 const REFUSAL =
   "I don't have that in what I know about PAR Technologys. I can put you in touch with the team, who'll know for sure — want the contact page?";
 
@@ -132,10 +169,17 @@ export async function* runLocalChat(
   const hits = retrieve(message);
 
   let reply: string;
-  let mood: "excited" | "neutral" | "thoughtful" = "neutral";
+  let mood: "excited" | "neutral" | "thoughtful" | "annoyed" = "neutral";
   let action: null | "point_to_contact" = null;
 
-  if (hits.length === 0) {
+  // A canned in-character response beats a refusal for the common off-topic
+  // cases, and each one carries the mood the mascot should show.
+  const canned = hits.length === 0 ? OFF_TOPIC.find((o) => o.test.test(message)) : undefined;
+
+  if (canned) {
+    reply = canned.reply;
+    mood = canned.mood;
+  } else if (hits.length === 0) {
     reply = REFUSAL;
     mood = "thoughtful";
     action = "point_to_contact";

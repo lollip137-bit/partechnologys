@@ -17,7 +17,7 @@ import type { Placement } from "./useMascotPlacement";
  * and the chat panel carry the accessible names.
  *
  * Lighting is keyed to the V3 palette: a warm-neutral key, a --blue rim and a
- * --cyan underglow so PARi sits in the same light as the particle film.
+ * --cyan underglow so Drax sits in the same light as the particle film.
  */
 export function Mascot({
   onFps,
@@ -31,7 +31,7 @@ export function Mascot({
   return (
     <div
       aria-hidden="true"
-      data-pari-canvas=""
+      data-drax-canvas=""
       style={{
         position: "fixed",
         left: placement.x,
@@ -46,7 +46,7 @@ export function Mascot({
         dpr={quality === "high" ? [1, 2] : [1, 1.25]}
         gl={{ antialias: quality === "high", alpha: true, powerPreference: "high-performance" }}
         /**
-         * Framed so the WHOLE mascot fits with margin. PARi spans roughly
+         * Framed so the WHOLE mascot fits with margin. Drax spans roughly
          * y -1.3 (body bottom at full sleepy-sink) to +0.85 (head top at float
          * peak) — ~2.15 units — centred near y -0.22, so the camera is offset
          * down to match and pulled back to 4.6 (visible height 2.81) to leave
@@ -61,7 +61,7 @@ export function Mascot({
         <directionalLight position={[2.5, 4, 3]} intensity={1.25} color="#FFFFFF" />
         {/* --blue rim from behind-left */}
         <directionalLight position={[-3, 1, -2]} intensity={0.6} color="#2563EB" />
-        {/* --cyan underglow, ties PARi to the film's signature light */}
+        {/* --cyan underglow, ties Drax to the film's signature light */}
         <pointLight position={[0, -1.5, 2]} intensity={0.55} color="#00C2FF" />
 
         <MascotModel />

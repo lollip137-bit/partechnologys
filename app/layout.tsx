@@ -117,7 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${sora.variable} ${inter.variable}`}>
       <body>
         {children}
-        {/* PARi — the floating AI companion. Mounted once, persists across routes. */}
+        {/* Drax — the floating AI companion. Mounted once, persists across routes. */}
         <MascotMount />
         <script
           type="application/ld+json"
