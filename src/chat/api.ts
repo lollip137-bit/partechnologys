@@ -56,12 +56,21 @@ export async function* streamChat(
   }
 
   // --- optional: a real streaming endpoint -------------------------------
-  const res = await fetch(REMOTE, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history, sessionId }),
-    signal,
-  });
+  // If it is unreachable, fall back to the in-browser brain rather than
+  // failing: a slightly less clever Drax beats a broken one.
+  let res: Response;
+  try {
+    res = await fetch(REMOTE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history, sessionId }),
+      signal,
+    });
+  } catch {
+    const { runLocalChat } = await import("./localBrain");
+    yield* runLocalChat(message, history);
+    return;
+  }
 
   if (res.status === 429) {
     let retryAfterMs = 4000;
@@ -74,8 +83,10 @@ export async function* streamChat(
     throw new RateLimitedError(retryAfterMs);
   }
 
+  // Server error / quota exhausted / misconfigured: same fallback.
   if (!res.ok || !res.body) {
-    yield { type: "error", message: `HTTP ${res.status}`, fallback: true };
+    const { runLocalChat } = await import("./localBrain");
+    yield* runLocalChat(message, history);
     return;
   }
 
