@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { PageBack } from './BackControls';
+import SocialWheel from './Social';
 
 export const PAGE_LINKS: { href: string; label: string }[] = [
   { href: '/services', label: 'Services' },
@@ -88,6 +89,7 @@ export function PageFooter() {
           <Link href="/contact">Contact</Link>
           <Link href="/">↺ Replay the experience</Link>
         </nav>
+        <SocialWheel />
         <div className="footer-copy">© {new Date().getFullYear()} PAR Technologys. All rights reserved.</div>
       </div>
     </footer>

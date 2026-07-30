@@ -7,14 +7,13 @@ import Image from 'next/image';
 import { STATS, SERVICES, PROCESS, PROJECTS, FAQS, INDUSTRY_CARDS, ENGAGEMENT, INSIGHTS } from '@/content/site';
 import { ProjectWindow, ProjectModal, useProjectPreview } from './Projects';
 import Flow, { ArtCard } from './Flow';
+import SocialWheel from './Social';
 import {
   siReact, siNextdotjs, siNodedotjs, siPython, siTensorflow,
   siDocker, siKubernetes, siPostgresql, siTypescript, siGooglecloud,
-  siGithub, siInstagram, siFacebook, siYoutube, siWhatsapp,
 } from 'simple-icons';
 
 const STACK = [siReact, siNextdotjs, siNodedotjs, siPython, siTensorflow, siDocker, siKubernetes, siPostgresql, siTypescript, siGooglecloud];
-const SOCIALS = [siGithub, siInstagram, siFacebook, siYoutube, siWhatsapp];
 
 function ServiceIcon({ kind }: { kind: string }) {
   const common = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -315,33 +314,7 @@ export default function Sections() {
               <Link href="/careers">Careers</Link>
               <Link href="/contact">Contact</Link>
             </nav>
-            {/* the social wheel — hover the hub, the apps fan out */}
-            <div className="social">
-              <button className="social-hub" aria-label="Social links">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="2.4" />
-                  <circle cx="12" cy="4" r="1.6" /><circle cx="19" cy="8" r="1.6" />
-                  <circle cx="19" cy="16" r="1.6" /><circle cx="12" cy="20" r="1.6" /><circle cx="5" cy="12" r="1.6" />
-                  <path d="M12 6v3.6M17.6 8.8l-3.4 1.9M17.6 15.2l-3.4-1.9M12 18v-3.6M6.8 12h2.8" />
-                </svg>
-              </button>
-              <div className="social-wheel">
-                {SOCIALS.map((icon, i) => (
-                  <a
-                    key={icon.slug}
-                    className="social-item"
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    aria-label={icon.title}
-                    style={{ ['--i' as string]: i, ['--n' as string]: SOCIALS.length }}
-                  >
-                    <svg viewBox="0 0 24 24" role="img" fill={`#${icon.hex}`}>
-                      <path d={icon.path} />
-                    </svg>
-                  </a>
-                ))}
-              </div>
-            </div>
+            <SocialWheel />
             <div className="footer-copy">© {new Date().getFullYear()} PAR Technologys. All rights reserved.</div>
           </div>
         </footer>

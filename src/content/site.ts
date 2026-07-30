@@ -1,6 +1,18 @@
 // Site content — structured like the best AI/software agency sites
 // (hero film → proof → services → process → work → stack → voices → FAQ → CTA)
 
+// The real, live accounts — one source of truth for every footer on the site.
+// Rule: only add an entry once its URL is confirmed to resolve. An icon that
+// links nowhere (this wheel used to be five icons all pointing at "#") reads as
+// a broken site, so a shorter honest list beats a longer decorative one.
+export const SOCIALS: { slug: string; label: string; href: string }[] = [
+  { slug: 'linkedin', label: 'LinkedIn', href: 'https://www.linkedin.com/company/par-technologys/' },
+  // profile URL kept clean: the ?igsh= token on a shared Instagram link is just
+  // app-share tracking and is not needed to reach the account
+  { slug: 'instagram', label: 'Instagram', href: 'https://www.instagram.com/_partechnologys' },
+  { slug: 'facebook', label: 'Facebook', href: 'https://www.facebook.com/share/1ZTiXM6yUW/' },
+];
+
 export const STATS = [
   { value: '120+', label: 'Projects shipped' },
   { value: '40+', label: 'AI systems in production' },
