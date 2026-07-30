@@ -26,8 +26,14 @@ export interface Drive {
   /** How far the eye colour shifts from accent toward hot amber, 0..1. */
   heat: number;
 
-  /** Extra head tilt on Z, radians (curious = ~12°). */
+  /** Extra head tilt on Z, radians (curious = ~12°). Head only. */
   headTiltZ: number;
+  /**
+   * WHOLE-BODY tilt on Z, radians — head, torso and hands together, applied at
+   * the root. This is what makes a peek read as leaning around a corner
+   * rather than just cocking the head.
+   */
+  tiltZ: number;
   /** Float amplitude multiplier (excited > 1, sleepy < 1). */
   bob: number;
   /** Vertical world offset — sleepy sink (~ -0.23 ≈ 20px). */
@@ -36,8 +42,14 @@ export interface Drive {
   scale: number;
   /** Extra continuous Y spin, radians (celebrate). */
   spin: number;
-  /** Horizontal world offset used by peeking (exits/enters frame). */
+  /** Horizontal world offset used by hiding/peeking (exits/enters frame). */
   offsetX: number;
+  /**
+   * Vertical world offset used by hiding/peeking. Paired with offsetX so Drax
+   * can leave and re-enter from ANY edge — left, right, top or bottom — not
+   * just the two horizontal ones.
+   */
+  offsetY: number;
 
   /** Chest-logo emissive intensity (idle 1.0 · thinking 2.2 · celebrate 3.0). */
   logoIntensity: number;
@@ -64,11 +76,13 @@ export function createDrive(): Drive {
     shake: 0,
     heat: 0,
     headTiltZ: 0,
+    tiltZ: 0,
     bob: 1,
     sinkY: 0,
     scale: 1,
     spin: 0,
     offsetX: 0,
+    offsetY: 0,
     logoIntensity: 1.0,
     accentIntensity: 1.0,
     ringOpacity: 0,

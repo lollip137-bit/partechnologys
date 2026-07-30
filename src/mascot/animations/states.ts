@@ -33,11 +33,13 @@ function toRest(tl: gsap.core.Timeline, d: Drive, extra: Partial<Drive> = {}) {
       narrow: 0,
       sad: 0,
       headTiltZ: 0,
+      tiltZ: 0,
       bob: 1,
       sinkY: 0,
       scale: 1,
       spin: 0,
       offsetX: 0,
+      offsetY: 0,
       logoIntensity: LOGO_INTENSITY.idle,
       accentIntensity: 1.0,
       ringOpacity: 0,
@@ -277,41 +279,100 @@ export const asleep: Builder = (d) => {
 };
 
 /**
- * Peeks back in from the edge it hid behind, watches you for a moment, then
- * ducks out again. `hideDir` is the screen edge Drax went behind (-1 left,
- * +1 right) so it always returns from the same side it left.
+ * Frame geometry, in world units.
+ *
+ * The mascot's canvas is a small ~210x240 corner box with the camera framed so
+ * the WHOLE idle mascot fits with margin (see Mascot.tsx). At that framing the
+ * visible half-width is ~1.23 and half-height ~1.4. Anything beyond those is
+ * off-screen, which is what the hide/peek offsets are built from. Tuned once
+ * here rather than sprinkled as magic numbers: an earlier version used values
+ * meant for a full-page canvas and pushed Drax almost entirely out of frame,
+ * so only a sliver ever showed during a peek.
  */
-export const peeking: Builder = (d, hideDir = 1) => {
-  const tl = gsap.timeline();
-  // The mascot's canvas is a small ~210x240 corner box (camera framed for the
-  // WHOLE idle mascot to fit with margin — see Mascot.tsx), not the full-page
-  // canvas this animation was originally tuned for. At that framing, roughly
-  // ±1.23 world units is the edge of the visible frame, so the old distances
-  // (2.4 / 1.35) pushed "peek" almost entirely out of frame — barely a sliver
-  // ever showed. These are scaled down so most of the body is genuinely
-  // visible during the hold, while "off" still clears the frame for the hide.
-  const off = 1.7 * hideDir; // fully off-screen on that side
-  const peek = 0.62 * hideDir; // most of the body visible, leaning in from the edge
+const OFF_X = 1.7; // clears the frame horizontally
+const OFF_Y = 2.3; // clears it vertically (the body is ~2.15 tall)
+const PEEK_X = 0.62; // leaning in from a side edge, most of the body visible
+const PEEK_Y = 0.78; // leaning in from top/bottom
 
-  // A different tilt every peek, so it never reads as a looping animation:
-  // magnitude varies 20°-50°, and it occasionally cocks the OTHER way (an
-  // inquisitive head-tilt) instead of always leaning further into hiding.
-  const magnitudeDeg = 20 + Math.random() * 30; // 20°..50°
-  const sign = Math.random() < 0.72 ? hideDir : -hideDir; // mostly "into" the edge
-  const tiltRad = (sign * magnitudeDeg * Math.PI) / 180;
-  // small extra variety: how far it leans out, and how long it holds the stare
-  const peekDepth = peek * (0.85 + Math.random() * 0.3);
+/** The four edges Drax can hide behind and re-enter from. */
+const EDGES = [
+  { x: -1, y: 0 }, // left
+  { x: 1, y: 0 }, // right
+  { x: 0, y: 1 }, // top
+  { x: 0, y: -1 }, // bottom
+] as const;
+
+/**
+ * Peeks in from a RANDOM edge, leaning its whole body around the corner,
+ * watches for a moment, then ducks back out the way it came.
+ *
+ * Deliberately independent of `hideDir` (the edge it originally withdrew
+ * behind): Drax slips off one side and reappears somewhere else entirely, so
+ * you never know where it's coming from next. It's off-screen and invisible
+ * between peeks, so relocating to a new edge is free.
+ *
+ * The lean is a WHOLE-BODY tilt (`tiltZ`, applied at the root) rather than a
+ * head cock — that's what sells "leaning around a corner" instead of just
+ * looking sideways.
+ */
+export const peeking: Builder = (d) => {
+  const tl = gsap.timeline();
+
+  const edge = EDGES[Math.floor(Math.random() * EDGES.length)];
+  const horizontal = edge.x !== 0;
+
+  // Where it waits off-screen, and how far it leans into view.
+  const offX = edge.x * OFF_X;
+  const offY = edge.y * OFF_Y;
+  const depth = 0.85 + Math.random() * 0.3; // vary how far it commits
+  const inX = horizontal ? edge.x * PEEK_X * depth : (Math.random() - 0.5) * 0.5;
+  const inY = horizontal ? 0 : edge.y * PEEK_Y * depth;
+
+  // Whole-body lean, 20°-50°, direction depending on which edge it came from.
+  // Coming from the left, the body tips right (negative Z) so the head leads
+  // into view — and vice versa. From top/bottom there's no "correct" way to
+  // lean, so it picks a side at random for variety.
+  const magnitude = ((20 + Math.random() * 30) * Math.PI) / 180;
+  const tiltSign = horizontal ? edge.x : Math.random() < 0.5 ? -1 : 1;
+  const tiltRad = tiltSign * magnitude;
+
   const holdSeconds = 0.6 + Math.random() * 0.8;
 
-  tl.set(d, { offsetX: off, eyeOpen: 0.2, happy: 0, sad: 0, angry: 0, heat: 0, shake: 0 })
-    // lean in, one eye first
-    .to(d, { offsetX: peekDepth, eyeOpen: 1, wide: 1, duration: 0.55, ease: "back.out(1.4)" })
-    // tilt, watching — angle differs every time
-    .to(d, { headTiltZ: tiltRad, duration: 0.4, ease: "power2.out" })
+  tl.set(d, {
+    offsetX: offX,
+    offsetY: offY,
+    tiltZ: tiltRad * 0.6, // already leaning as it emerges
+    eyeOpen: 0.2,
+    happy: 0,
+    sad: 0,
+    angry: 0,
+    heat: 0,
+    shake: 0,
+  })
+    // lean in around the corner, whole body
+    .to(d, {
+      offsetX: inX,
+      offsetY: inY,
+      tiltZ: tiltRad,
+      eyeOpen: 1,
+      wide: 1,
+      duration: 0.6,
+      ease: "back.out(1.4)",
+    })
+    // settle into watching you
     .to(d, { wide: 0.55, happy: 0.5, duration: 0.5, ease: "sine.inOut" })
     .to(d, {}, `+=${holdSeconds}`) // hold the stare, a different length each time
-    // duck back out of sight
-    .to(d, { offsetX: off, wide: 0, happy: 0, eyeOpen: 0.4, headTiltZ: 0, duration: 0.45, ease: "power2.in" });
+    // duck back out the way it came
+    .to(d, {
+      offsetX: offX,
+      offsetY: offY,
+      tiltZ: tiltRad * 0.5,
+      wide: 0,
+      happy: 0,
+      eyeOpen: 0.4,
+      duration: 0.5,
+      ease: "power2.in",
+    });
   return tl;
 };
 
@@ -383,7 +444,10 @@ export const annoyed: Builder = (d) => {
 export const hiding: Builder = (d, hideDir = 1) => {
   const tl = gsap.timeline();
   tl.to(d, {
-    offsetX: 2.4 * hideDir,
+    // slips out sideways past the frame edge, leaning as it goes
+    offsetX: OFF_X * hideDir,
+    offsetY: 0,
+    tiltZ: (hideDir * 18 * Math.PI) / 180,
     eyeOpen: 0.45,
     wide: 0,
     happy: 0,

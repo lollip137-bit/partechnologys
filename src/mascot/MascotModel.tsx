@@ -100,8 +100,10 @@ export function MascotModel() {
 
     if (root.current) {
       root.current.position.x = drive.offsetX + shakeX;
-      root.current.position.y = floatY + drive.sinkY + shakeY;
+      root.current.position.y = floatY + drive.sinkY + shakeY + drive.offsetY;
       root.current.rotation.y = drive.spin;
+      // Whole-body lean — head, torso and hands rotate together as one object.
+      root.current.rotation.z = drive.tiltZ;
       const sc = drive.scale + breath;
       root.current.scale.setScalar(sc);
     }
