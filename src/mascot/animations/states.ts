@@ -283,15 +283,33 @@ export const asleep: Builder = (d) => {
  */
 export const peeking: Builder = (d, hideDir = 1) => {
   const tl = gsap.timeline();
-  const off = 2.4 * hideDir; // fully off-screen on that side
-  const peek = 1.35 * hideDir; // only the head/shoulder showing
+  // The mascot's canvas is a small ~210x240 corner box (camera framed for the
+  // WHOLE idle mascot to fit with margin — see Mascot.tsx), not the full-page
+  // canvas this animation was originally tuned for. At that framing, roughly
+  // ±1.23 world units is the edge of the visible frame, so the old distances
+  // (2.4 / 1.35) pushed "peek" almost entirely out of frame — barely a sliver
+  // ever showed. These are scaled down so most of the body is genuinely
+  // visible during the hold, while "off" still clears the frame for the hide.
+  const off = 1.7 * hideDir; // fully off-screen on that side
+  const peek = 0.62 * hideDir; // most of the body visible, leaning in from the edge
+
+  // A different tilt every peek, so it never reads as a looping animation:
+  // magnitude varies 20°-50°, and it occasionally cocks the OTHER way (an
+  // inquisitive head-tilt) instead of always leaning further into hiding.
+  const magnitudeDeg = 20 + Math.random() * 30; // 20°..50°
+  const sign = Math.random() < 0.72 ? hideDir : -hideDir; // mostly "into" the edge
+  const tiltRad = (sign * magnitudeDeg * Math.PI) / 180;
+  // small extra variety: how far it leans out, and how long it holds the stare
+  const peekDepth = peek * (0.85 + Math.random() * 0.3);
+  const holdSeconds = 0.6 + Math.random() * 0.8;
+
   tl.set(d, { offsetX: off, eyeOpen: 0.2, happy: 0, sad: 0, angry: 0, heat: 0, shake: 0 })
     // lean in, one eye first
-    .to(d, { offsetX: peek, eyeOpen: 1, wide: 1, duration: 0.55, ease: "back.out(1.4)" })
-    // tilt, watching
-    .to(d, { headTiltZ: hideDir * (14 * Math.PI) / 180, duration: 0.4, ease: "power2.out" })
+    .to(d, { offsetX: peekDepth, eyeOpen: 1, wide: 1, duration: 0.55, ease: "back.out(1.4)" })
+    // tilt, watching — angle differs every time
+    .to(d, { headTiltZ: tiltRad, duration: 0.4, ease: "power2.out" })
     .to(d, { wide: 0.55, happy: 0.5, duration: 0.5, ease: "sine.inOut" })
-    .to(d, {}, "+=0.9") // hold the stare
+    .to(d, {}, `+=${holdSeconds}`) // hold the stare, a different length each time
     // duck back out of sight
     .to(d, { offsetX: off, wide: 0, happy: 0, eyeOpen: 0.4, headTiltZ: 0, duration: 0.45, ease: "power2.in" });
   return tl;

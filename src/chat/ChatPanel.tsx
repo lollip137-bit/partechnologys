@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useChat } from "./useChat";
+import { useMascotState } from "@/mascot/useMascotState";
 
 /**
  * Chat panel. Anchored directly above the mascot so the two read as ONE object:
@@ -62,6 +63,7 @@ export function ChatPanel({
   const streaming = useChat((s) => s.streaming);
   const closePanel = useChat((s) => s.closePanel);
   const send = useChat((s) => s.send);
+  const mood = useMascotState((s) => s.mood);
 
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,7 +132,7 @@ export function ChatPanel({
         >
           <header style={headerStyle}>
             <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
-              <span aria-hidden style={dotStyle} />
+              <span aria-hidden style={{ ...dotStyle, ...moodDotStyle(mood) }} />
               <strong style={{ color: "#F3F6FA", letterSpacing: "0.01em" }}>Drax</strong>
               <span style={subtleLabel}>PAR TECHNOLOGYS</span>
             </span>
@@ -278,7 +280,27 @@ const dotStyle: React.CSSProperties = {
   background: "#00C2FF",
   boxShadow: "0 0 10px #00C2FF",
   flex: "0 0 auto",
+  transition: "background 200ms ease, box-shadow 200ms ease",
 };
+
+/**
+ * The header dot doubles as a mood indicator, so Drax's reaction is visible
+ * even to someone only looking at the text panel — the 3D mascot already
+ * shows the full expression (scowl/happy-arc/etc), but that's easy to miss if
+ * you're reading the transcript rather than watching the model.
+ */
+function moodDotStyle(mood: string): React.CSSProperties {
+  switch (mood) {
+    case "excited":
+      return { background: "#34D399", boxShadow: "0 0 12px #34D399", animation: "drax-pulse-fast 0.9s ease-in-out infinite" };
+    case "disappointed": // the mascot store's name for "annoyed" (see Mood in useMascotState.ts)
+      return { background: "#FF7A3C", boxShadow: "0 0 12px #FF7A3C", animation: "drax-pulse-fast 0.6s ease-in-out infinite" };
+    case "thoughtful":
+      return { background: "#FBBF6B", boxShadow: "0 0 10px #FBBF6B", animation: "drax-pulse-slow 2.4s ease-in-out infinite" };
+    default:
+      return {};
+  }
+}
 
 const subtleLabel: React.CSSProperties = {
   color: "rgba(229,231,235,0.45)",

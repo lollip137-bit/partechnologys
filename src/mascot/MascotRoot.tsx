@@ -217,6 +217,8 @@ export function MascotRoot() {
       <style>{`
         @keyframes drax-blink { 0%,100%{opacity:1} 50%{opacity:0} }
         @keyframes drax-hint-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+        @keyframes drax-pulse-fast { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.55;transform:scale(0.82)} }
+        @keyframes drax-pulse-slow { 0%,100%{opacity:1} 50%{opacity:0.6} }
         [data-drax-launcher]:focus-visible { outline: 2px solid #00C2FF; outline-offset: 4px; border-radius: 18px; }
       `}</style>
 
