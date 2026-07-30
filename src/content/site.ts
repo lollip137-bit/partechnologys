@@ -29,6 +29,25 @@ export const SERVICES = [
   { title: 'Growth Engineering', line: 'SEO, GEO, AEO and analytics loops that compound — traffic into pipeline into revenue.', icon: 'growth' },
 ];
 
+/** About page — the principles. Previously hardcoded in app/about/Client.tsx. */
+export const VALUES = [
+  { name: 'Ship weekly', line: 'Working software every week. No six-month black boxes, ever.' },
+  { name: 'Own the outcome', line: 'We measure ourselves on your numbers — not our hours.' },
+  { name: 'Stay after launch', line: 'Systems are living things. We monitor, iterate and grow them.' },
+  { name: 'You own everything', line: 'Code, infrastructure, models, weights. Handed over, documented.' },
+];
+
+/**
+ * Contact page — what happens after you press send. Every line restates a
+ * claim already published on this site (24h response, free scoping call,
+ * NDA-first, costed audit before commitment) — nothing new is promised here.
+ */
+export const CONTACT_NEXT = [
+  { name: 'An engineer reads it', line: 'Every message is answered by an engineer, not a sales script — within one business day.' },
+  { name: 'A free scoping call', line: 'We map the problem together. No obligation — and an NDA before you share anything sensitive.' },
+  { name: 'A costed audit', line: 'You see exactly what we’d build, how long it takes and what it costs — before you commit.' },
+];
+
 export const PROCESS = [
   { step: '01', title: 'Discover', line: 'We map your operations and find the exact place where AI changes everything.' },
   { step: '02', title: 'Design', line: 'Architecture, prototypes and a roadmap — you see the system before we build it.' },

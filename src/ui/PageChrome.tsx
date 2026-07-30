@@ -15,6 +15,7 @@ export const PAGE_LINKS: { href: string; label: string }[] = [
   { href: '/insights', label: 'Insights' },
   { href: '/about', label: 'About' },
   { href: '/careers', label: 'Careers' },
+  { href: '/faq', label: 'FAQ' },
 ];
 
 /** The real navigation for every page outside the film. */
