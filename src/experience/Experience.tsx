@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import ParticleEngine from '@/particles/ParticleEngine';
 import CameraRig from './CameraRig';
@@ -47,7 +47,26 @@ function FrameloopGovernor() {
   return null;
 }
 
+/**
+ * PROFILING HARNESS — lets a headless session bisect the frame by switching
+ * whole layers off at runtime:
+ *   __parLayers({ post: false })    → drop the postprocessing chain
+ *   __parLayers({ cosmos: false })  → drop the ambient star/dust layer
+ *   __parLayers({ field: false })   → drop the GPU particle field entirely
+ * Measuring beats guessing: the particle population turned out to be almost
+ * free here, which no amount of code reading would have revealed.
+ */
+function useLayerToggles() {
+  const [layers, setLayers] = useState({ post: true, cosmos: true, field: true });
+  useEffect(() => {
+    (window as unknown as { __parLayers: (p: object) => void }).__parLayers = (patch) =>
+      setLayers((l) => ({ ...l, ...patch }));
+  }, []);
+  return layers;
+}
+
 export default function Experience() {
+  const layers = useLayerToggles();
   return (
     <div className="stage" aria-hidden>
       <Canvas
@@ -61,10 +80,10 @@ export default function Experience() {
         camera={{ fov: 46, near: 0.1, far: 560, position: [0, 0.8, 28] }}
       >
         <color attach="background" args={['#000104']} />
-        <Cosmos />
-        <ParticleEngine />
+        {layers.cosmos && <Cosmos />}
+        {layers.field && <ParticleEngine />}
         <CameraRig />
-        <PostFX />
+        {layers.post && <PostFX />}
         <FrameloopGovernor />
       </Canvas>
     </div>

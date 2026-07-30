@@ -5,6 +5,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { timeline, smoothstep, window01, clamp01 } from '@/state/timeline';
 import { device } from '@/state/ticker';
+import { quality, setTier } from '@/state/quality';
 import { SHAPE_SLOTS, SHAPE_PALETTES, STATION } from '@/experience/phases';
 import {
   TEX_SIZE, COUNT, makeTexture,
@@ -72,11 +73,13 @@ export default function ParticleEngine() {
   const initialized = useRef(false);
   // adaptive quality governor — every machine gets its best possible density.
   // phones and low-core devices start lean instead of thrashing their way down.
-  const quality = useRef({
+  const quality_ = useRef({
     frac: device.lowPower ? 0.4 : 1,
     dpr: device.lowPower ? 0.8 : 1,
     acc: 0,
     frames: 0,
+    slow: 0, // consecutive slow windows with both cheap levers already floored
+    fast: 0, // consecutive fast windows, before restoring the composer
   });
 
   const sim = useMemo(() => {
@@ -187,6 +190,7 @@ export default function ParticleEngine() {
         uRes: { value: new THREE.Vector2(1, 1) },
         uFocus: { value: new THREE.Vector2(0.5, 0.5) },
         uMask: { value: 0 }, uMaskIn: { value: 0.4 }, uMaskOut: { value: 0.8 },
+        uAtmos: { value: 0.8 },
       },
     });
     return { geo, mat };
@@ -359,7 +363,7 @@ export default function ParticleEngine() {
     // Thinner populations render slightly larger to keep perceived density —
     // EXCEPT in the finale. There the particles are a legible logo, and fat
     // points on a throttled phone turn the mark into one blown-out white blob.
-    const thinComp = 1 + (1 - quality.current.frac) * 0.5 * (1 - logoW * 0.9);
+    const thinComp = 1 + (1 - quality_.current.frac) * 0.5 * (1 - logoW * 0.9);
     m.uSize.value = (0.5 + logoW * 0.34) * thinComp;
     // The mark burns hotter than the travelling field, but only so far: past
     // roughly 4.5 the HDR nucleus clips and every particle tonemaps to white,
@@ -404,7 +408,7 @@ export default function ParticleEngine() {
     // two levers, in order: thin the drawn population, then lower resolution.
     // The finale raises both floors: the mark is a shape the visitor has to
     // READ, and a sparse, upscaled logo dissolves into a bloom smear.
-    const q = quality.current;
+    const q = quality_.current;
     const fracFloor = 0.22 + logoW * 0.24;
     const dprFloor = 0.72 + logoW * 0.16;
     if (q.frac < fracFloor) { q.frac = fracFloor; points.geo.setDrawRange(0, Math.floor(COUNT * q.frac)); }
@@ -421,16 +425,60 @@ export default function ParticleEngine() {
         else if (q.dpr > dprFloor) {
           q.dpr = Math.max(dprFloor, q.dpr - 0.14);
           state.setDpr(Math.min(window.devicePixelRatio || 1, 1.75) * q.dpr);
+        } else {
+          // THE LEVER THAT ACTUALLY MOVES THE FRAME.
+          // Both cheap levers are floored and the frame is still slow, which is
+          // where the old governor gave up and sat at 26fps forever. Population
+          // and resolution are only worth ~7ms of a 38ms frame here; the
+          // post-processing chain is worth ~19ms. Drop it and roughly double
+          // the frame rate. Needs sustained evidence (~2.4s) because this is a
+          // visible change in the image, not a silent one.
+          q.slow++;
+          if (q.slow >= 3) setTier(1);
         }
       } else if (fps > 58) {
-        if (q.frac < 1) q.frac = Math.min(1, q.frac * 1.08);
+        // Recover in the reverse order it was given up, and only from real
+        // headroom — restoring the composer costs ~19ms, so demanding a long
+        // run of fast frames is what stops it flapping in and out.
+        if (quality.tier > 0) {
+          q.fast++;
+          if (q.fast >= 8) { setTier(0); q.fast = 0; q.slow = 0; }
+        } else if (q.frac < 1) q.frac = Math.min(1, q.frac * 1.08);
         else if (q.dpr < 1) {
           q.dpr = Math.min(1, q.dpr + 0.14);
           state.setDpr(Math.min(window.devicePixelRatio || 1, 1.75) * q.dpr);
         }
       }
+      if (fps >= 52) q.slow = 0;
+      if (fps <= 58) q.fast = 0;
       points.geo.setDrawRange(0, Math.floor(COUNT * q.frac));
       q.acc = 0; q.frames = 0;
+    }
+
+    // Without bloom there is no external glow, so each mote has to carry its
+    // own — otherwise tier 1 reads as flat grey dots. Atmosphere does most of
+    // the work (it is the soft falloff around each nucleus, i.e. exactly what
+    // bloom was supplying) with a small exposure lift behind it.
+    const bloomless = quality.tier > 0 ? 1 : 0;
+    m.uAtmos.value = 0.8 + bloomless * 1.5;
+    m.uIntensity.value *= 1 + bloomless * 0.35;
+
+    // ---- PROFILING HOOK ----
+    // Lets a headless session isolate where a frame actually goes by forcing one
+    // knob at a time from the console, instead of rebuilding per hypothesis:
+    //   __parTune = { curl: 0 }    → removes the curl-noise term from the sim
+    //   __parTune = { frac: 0.05 } → collapses the DRAWN population only
+    //   __parTune = { size: 0.3 }  → shrinks every particle's screen footprint
+    // If `frac` barely moves the frame rate the cost is the GPGPU simulation;
+    // if it moves it a lot the cost is raster/blending. No allocation and one
+    // property read per frame when unused.
+    const tune = (window as unknown as {
+      __parTune?: { curl?: number; frac?: number; size?: number };
+    }).__parTune;
+    if (tune) {
+      if (tune.curl !== undefined) velMat.uniforms.uCurlAmp.value *= tune.curl;
+      if (tune.size !== undefined) m.uSize.value *= tune.size;
+      if (tune.frac !== undefined) points.geo.setDrawRange(0, Math.floor(COUNT * tune.frac));
     }
 
     // headless verification hook — real GPU readback, never guess blind
@@ -441,7 +489,7 @@ export default function ParticleEngine() {
       (window as unknown as { __parDebug: object }).__parDebug = {
         p, reveal, blend, base, seek: velMat.uniforms.uSeek.value,
         swirl: velMat.uniforms.uSwirl.value,
-        frac: quality.current.frac, qdpr: quality.current.dpr,
+        frac: quality_.current.frac, qdpr: quality_.current.dpr,
         drawn: points.geo.drawRange.count,
         size: m.uSize.value,
         pos: Array.from(px.slice(0, 8)).map((v) => Math.round(v * 100) / 100),

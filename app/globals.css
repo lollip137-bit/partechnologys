@@ -35,6 +35,21 @@ body {
   inset: 0;
   z-index: 0;
 }
+/* Vignette, done in CSS rather than as a post-processing pass. It used to be a
+   full-screen GPU pass in the effect chain; as a composited gradient it costs
+   nothing per frame and is visually identical over a near-black frame. */
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 118% 118% at 50% 50%,
+    transparent 42%,
+    rgba(0, 1, 4, 0.55) 82%,
+    rgba(0, 1, 4, 0.86) 100%
+  );
+}
 
 /* ============ BOOT VEIL — a single particle waiting ============ */
 .veil {

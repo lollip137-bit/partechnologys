@@ -303,6 +303,11 @@ varying float vTemp;
 varying float vBright;
 uniform float uIntensity;  // HDR exposure of the nucleus
 uniform float uHalo;       // 1 = soft atmosphere per mote, 0 = pin-sharp points
+// How much of its own glow each mote carries. Normally low, because bloom
+// supplies the light downstream — but when the quality governor drops the
+// composer on a weak GPU there IS no bloom, and the field would otherwise
+// collapse into flat grey dots.
+uniform float uAtmos;
 // ---- COMPOSITION MASK ----
 // Every act deliberately shoves the subject into one half of the frame so the
 // copy panel owns the other. Stray matter drifting through that empty half
@@ -384,7 +389,7 @@ void main(){
 
   // HDR: the nucleus is allowed far past 1.0 so bloom lifts it into real light
   float corePower = uIntensity * (1.0 + heat * 2.2 + pulse * 3.4 + wave * 3.0);
-  vec3 hdr = col * (atmos * 0.8 + nucleus * corePower) * lum;
+  vec3 hdr = col * (atmos * uAtmos + nucleus * corePower) * lum;
   // hot cores desaturate toward white, exactly like an over-exposed highlight
   hdr = mix(hdr, vec3(dot(hdr, vec3(0.33))) + hdr * 0.35,
             clamp(nucleus * (heat + pulse) * 0.5, 0.0, 0.55));
