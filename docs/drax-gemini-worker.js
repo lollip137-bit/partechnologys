@@ -9,13 +9,28 @@
  *   GEMINI_API_KEY   your key from https://aistudio.google.com/apikey
  *   ALLOWED_ORIGIN   https://partechnologys.com
  *
- * ⚠️ Confirm both model IDs against https://ai.google.dev/gemini-api/docs/models
- *    before deploying. Google renames and retires them; do not trust a name
- *    from memory.
+ * Model IDs below were checked against
+ * https://ai.google.dev/gemini-api/docs/models on 2026-07-30 and were STABLE
+ * (not preview) on that date. Google does retire models — if a call starts
+ * failing with a 404/400 about the model, re-check that page.
  */
 
-const CHAT_MODEL = "gemini-flash-latest"; // ⚠️ CONFIRM against the docs
-const EMBED_MODEL = "gemini-embedding-001"; // ⚠️ CONFIRM against the docs
+/**
+ * Flash tier: fast and cheap, which is what a website assistant wants.
+ * `gemini-3.6-flash` balances speed with intelligence — chosen because Drax has
+ * to reliably emit the JSON control block at the end of every reply, and the
+ * cheaper lite tiers are less dependable at structured output.
+ * If cost matters more than polish, `gemini-3.5-flash-lite` is the cheapest
+ * stable option; check the control block still parses before keeping it.
+ */
+const CHAT_MODEL = "gemini-3.6-flash";
+
+/**
+ * Text embeddings for retrieval. `gemini-embedding-001` is stable and
+ * text-focused, which is all this needs. (`gemini-embedding-2` is the newer
+ * multimodal one — unnecessary here, we only ever embed short text.)
+ */
+const EMBED_MODEL = "gemini-embedding-001";
 
 const API = "https://generativelanguage.googleapis.com/v1beta/models";
 

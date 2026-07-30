@@ -46,16 +46,22 @@ never breaks because of a quota.
 
 ---
 
-## 3. Confirm the current model names
+## 3. The model names (already filled in)
 
-**Do not trust a model ID from memory, including mine.** Google renames and
-retires these. Open <https://ai.google.dev/gemini-api/docs/models> and confirm:
+Checked against <https://ai.google.dev/gemini-api/docs/models> on **2026-07-30**;
+both were **stable** (not preview) on that date and are already set in the
+worker:
 
-- a current **Flash-tier chat model** (fast + cheap — right for a website
-  assistant), and
-- a current **embedding model**.
+| Purpose | Model | Why this one |
+|---|---|---|
+| Chat | `gemini-3.6-flash` | Flash tier = fast and cheap. Picked over the lite tiers because Drax must reliably emit the JSON control block at the end of every reply, and lite models are shakier at structured output. |
+| Embeddings | `gemini-embedding-001` | Stable and text-focused, which is all retrieval needs here. |
 
-Put those exact strings in `CHAT_MODEL` / `EMBED_MODEL` in the function below.
+Cheaper alternative: `gemini-3.5-flash-lite`. If you switch, check that Drax's
+moods still work — if the control block stops parsing, that's why.
+
+Google does retire models. If calls start failing with a 404 or a 400 naming
+the model, re-check that page.
 
 ---
 
