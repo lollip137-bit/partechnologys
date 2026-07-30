@@ -62,15 +62,34 @@ export function initViewport(): () => void {
 
   // The film spacer is sized in viewport units, but fonts loading or the site
   // sections reflowing can still change it — observe rather than assume.
-  const film = document.getElementById('film');
   let ro: ResizeObserver | undefined;
-  if (film && typeof ResizeObserver !== 'undefined') {
+  const observeFilm = () => {
+    const film = document.getElementById('film');
+    if (!film || ro || typeof ResizeObserver === 'undefined') return false;
     ro = new ResizeObserver(remeasure);
     ro.observe(film);
-  }
+    return true;
+  };
+
+  // `#film` may not be in the DOM yet when this runs — it lives in a sibling
+  // subtree that can mount later. When it is missing, filmLen/filmEnd measure as
+  // 0 and the ResizeObserver above is never attached, so that zero is NEVER
+  // corrected. Everything downstream then believes the film has no length:
+  // `progress` saturates immediately and the frameloop governor decides the
+  // reader is past the end and sleeps the entire experience, leaving a black
+  // hero. So keep looking until it appears, then measure for real.
+  let tries = 0;
+  let retry = 0;
+  const waitForFilm = () => {
+    retry = 0;
+    if (observeFilm()) { measureViewport(); return; }
+    if (tries++ < 60) retry = window.setTimeout(waitForFilm, 50);
+  };
+  waitForFilm();
 
   return () => {
     if (pending) cancelAnimationFrame(pending);
+    if (retry) window.clearTimeout(retry);
     window.removeEventListener('resize', remeasure);
     window.removeEventListener('orientationchange', remeasure);
     ro?.disconnect();

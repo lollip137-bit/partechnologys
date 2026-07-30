@@ -1,36 +1,51 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import PageShell from '@/ui/PageShell';
 import Flow, { ArtCard } from '@/ui/Flow';
 import { SERVICE_TREE, svcSlug } from '@/content/services';
+import TechStack from '@/ui/TechStack';
 
+/**
+ * The full catalogue, VISIBLE.
+ *
+ * This page used to render the thirteen categories as `<details>` elements that
+ * were all CLOSED. Every one of ~130 services was therefore hidden behind a
+ * click, and arriving from the mega menu you saw a stack of shut boxes — "where
+ * are the services?" was the entirely fair reaction. Nothing a client is meant
+ * to buy should require a click to discover.
+ *
+ * So everything is open by default. The accordion still works (you can collapse
+ * a category you don't care about), a sticky index lets you jump, and each
+ * category advertises how many services it holds.
+ */
 export default function ServicesPage() {
-  // Which category the visitor actually asked for. Arriving from the mega menu
-  // used to drop you here with every accordion shut and no clue which one you
-  // clicked — the page looked identical no matter what you chose. Now the
-  // requested branch opens, scrolls into view and is briefly highlighted.
-  const [active, setActive] = useState<string | null>(null);
+  const total = useMemo(() => SERVICE_TREE.reduce((n, c) => n + c.items.length, 0), []);
+
+  // every category starts OPEN — see above
+  const [closed, setClosed] = useState<Set<string>>(new Set());
+  const [target, setTarget] = useState<string | null>(null);
+
+  const toggle = (slug: string) =>
+    setClosed((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug); else next.add(slug);
+      return next;
+    });
 
   useEffect(() => {
     const apply = () => {
       const slug = decodeURIComponent(window.location.hash.replace('#', ''));
-      if (!slug) return;
-      if (!SERVICE_TREE.some((s) => svcSlug(s.cat) === slug)) return;
-      setActive(slug);
-      // wait a frame so the branch is open (and therefore its real height)
-      // before scrolling, otherwise we land short of it
+      if (!slug || !SERVICE_TREE.some((s) => svcSlug(s.cat) === slug)) return;
+      setTarget(slug);
+      // make sure a deep-linked category is never left collapsed
+      setClosed((prev) => { const n = new Set(prev); n.delete(slug); return n; });
       requestAnimationFrame(() => {
-        // The branch is revealed declaratively via `active` (see className
-        // below) rather than left to the scroll observer, which misses it: it is
-        // off-screen at the instant the observer is created and arrives
-        // mid-smooth-scroll. A missed reveal here means the visitor lands on a
-        // blank gap where the service they clicked should be.
-        document.getElementById(slug)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById(slug)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     };
     apply();
-    // the mega menu links to a hash on a page you may already be on
     window.addEventListener('hashchange', apply);
     return () => window.removeEventListener('hashchange', apply);
   }, []);
@@ -39,9 +54,75 @@ export default function ServicesPage() {
     <PageShell
       kicker="SERVICES"
       title="Everything we build. Everything we run."
-      sub="Twelve disciplines, one team. Every service below is delivered end-to-end — from the first audit to production and beyond."
+      sub={`${total} services across ${SERVICE_TREE.length} disciplines — all delivered end to end by one team, from the first audit to production and beyond.`}
     >
+      {/* jump index — the whole catalogue at a glance */}
+      <section className="sec svc-index-sec">
+        <div className="wrap">
+          <div className="svc-index" data-a>
+            {SERVICE_TREE.map((cat) => (
+              <a key={cat.cat} href={`#${svcSlug(cat.cat)}`} className="svc-index-chip">
+                {cat.cat}
+                <span className="svc-index-n">{cat.items.length}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="sec">
+        <div className="wrap">
+          <div className="svc-tree">
+            {SERVICE_TREE.map((cat) => {
+              const slug = svcSlug(cat.cat);
+              const isOpen = !closed.has(slug);
+              const isTarget = target === slug;
+              return (
+                <section
+                  key={cat.cat}
+                  id={slug}
+                  // `in` asserted declaratively: React owns this className, so a
+                  // class poked in from outside is wiped on the next render —
+                  // which is how a deep-linked category once ended up invisible.
+                  className={`svc-branch svc-open-sec in ${isOpen ? 'is-open' : ''} ${isTarget ? 'svc-target' : ''}`}
+                >
+                  <button
+                    className="svc-branch-head"
+                    aria-expanded={isOpen}
+                    aria-controls={`${slug}-items`}
+                    onClick={() => toggle(slug)}
+                  >
+                    <span className="svc-branch-name">{cat.cat}</span>
+                    <span className="svc-branch-blurb">{cat.blurb}</span>
+                    <span className="svc-branch-count">{cat.items.length}</span>
+                    <span className="svc-chev" aria-hidden />
+                  </button>
+                  {/* the grid-template-rows height animation needs exactly ONE
+                      child to collapse, hence the inner wrapper */}
+                  <div className="svc-leafs" id={`${slug}-items`}>
+                    <div className="svc-leafs-inner">
+                      {cat.items.map((item) => (
+                        <Link
+                          key={item}
+                          href={`/contact?need=${encodeURIComponent(item)}`}
+                          className="svc-leaf"
+                        >
+                          {item}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* the stack we actually build on */}
+      <TechStack />
+
+      <section className="sec sec-alt">
         <div className="wrap">
           <span className="orb orb-a" aria-hidden />
           <div className="art-grid-3">
@@ -52,47 +133,11 @@ export default function ServicesPage() {
         </div>
       </section>
 
-      <section className="sec sec-alt">
+      <section className="sec">
         <div className="wrap">
           <div className="sec-kicker" data-a>THE DELIVERY RAIL</div>
           <h2 className="sec-title" data-a>Every service ships the same way.</h2>
           <Flow />
-        </div>
-      </section>
-
-      <section className="sec">
-        <div className="wrap">
-          <div className="svc-tree">
-            {SERVICE_TREE.map((cat) => {
-              const slug = svcSlug(cat.cat);
-              const isActive = active === slug;
-              return (
-                <details
-                  key={cat.cat}
-                  id={slug}
-                  // `in` is asserted DECLARATIVELY here, not added imperatively.
-                  // React owns this className, so any class poked in from the
-                  // outside is wiped on the next render — which is precisely how
-                  // the deep-linked branch ended up permanently at opacity 0
-                  // while its `svc-target` highlight survived.
-                  className={`svc-branch ${isActive ? 'svc-target in' : ''}`}
-                  data-a
-                  open={isActive}
-                >
-                  <summary>
-                    <span className="svc-branch-name">{cat.cat}</span>
-                    <span className="svc-branch-blurb">{cat.blurb}</span>
-                    <span className="faq-plus">+</span>
-                  </summary>
-                  <div className="svc-leafs">
-                    {cat.items.map((item) => (
-                      <span key={item} className="svc-leaf">{item}</span>
-                    ))}
-                  </div>
-                </details>
-              );
-            })}
-          </div>
         </div>
       </section>
     </PageShell>

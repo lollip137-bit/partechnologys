@@ -6,18 +6,15 @@ import { timeline, window01 } from '@/state/timeline';
 import { subscribe } from '@/state/ticker';
 import { viewport } from '@/state/viewport';
 import { networkAnchors } from '@/particles/targets';
-import {
-  siReact, siNextdotjs, siNodedotjs, siPython, siTensorflow, siPytorch,
-  siDocker, siKubernetes, siPostgresql, siTypescript, siGooglecloud, siMongodb,
-} from 'simple-icons';
+import { techByGroup } from '@/content/stack';
+import { TechMark } from './TechStack';
 
-// ORIGINAL colored technology logos, PINNED to the outer nodes of the
-// round neural system — the network drinks their energy. Hover shatters,
-// release reforms instantly.
-const ICONS = [
-  siReact, siNextdotjs, siNodedotjs, siPython, siTensorflow, siPytorch,
-  siDocker, siKubernetes, siPostgresql, siTypescript, siGooglecloud, siMongodb,
-];
+// ACT 05 is CLOUD-SCALE SYSTEMS — "we wire models into your data and ship them
+// as reliable services: observable, versioned". So the outer nodes of the neural
+// system carry the cloud, data and delivery stack — the things that actually run
+// a service in production. The network drinks their energy; hover shatters them
+// and release reforms instantly.
+const ICONS = techByGroup('Cloud', 'Database', 'DevOps');
 
 export default function TechOrbit() {
   const root = useRef<HTMLDivElement>(null);
@@ -68,14 +65,11 @@ export default function TechOrbit() {
 
   return (
     <div ref={root} className="orbit" aria-hidden>
-      {ICONS.map((icon) => (
-        <div key={icon.slug} className="orbit-item orbit-pinned">
+      {ICONS.map((tech) => (
+        <div key={tech.name} className="orbit-item orbit-pinned" style={{ ['--tech' as string]: `#${tech.hex}` }}>
           <span className="orbit-glow" />
-          <svg viewBox="0 0 24 24" role="img" aria-label={icon.title}
-            fill={icon.hex === '000000' ? '#E5E7EB' : `#${icon.hex}`}>
-            <path d={icon.path} />
-          </svg>
-          <span className="orbit-label">{icon.title}</span>
+          <TechMark tech={tech} />
+          <span className="orbit-label">{tech.name}</span>
         </div>
       ))}
     </div>

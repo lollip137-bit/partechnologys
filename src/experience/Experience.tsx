@@ -16,8 +16,16 @@ function FrameloopGovernor() {
   useEffect(() => {
     // Runs on the shared ticker rather than a third private rAF loop, and reads
     // the cached viewport instead of forcing a layout flush every frame.
-    const asleepNow = () =>
-      document.hidden || viewport.scrollY - viewport.filmEnd > viewport.h * 0.6;
+    const asleepNow = () => {
+      if (document.hidden) return true;
+      // FAIL SAFE. Until the film length is measured, `filmEnd` is 0 — and then
+      // EVERY scroll position looks like "past the end of the film", which put
+      // the entire experience to sleep and left a black hero with pinned logos
+      // floating over nothing. An unmeasured viewport has to mean "keep
+      // rendering", never "stop".
+      if (viewport.filmEnd <= 0) return false;
+      return viewport.scrollY - viewport.filmEnd > viewport.h * 0.6;
+    };
 
     const stop = subscribe(() => {
       const want: 'always' | 'never' = asleepNow() ? 'never' : 'always';

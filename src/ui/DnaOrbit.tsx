@@ -7,17 +7,15 @@ import { subscribe } from '@/state/ticker';
 import { viewport } from '@/state/viewport';
 import { STATION } from '@/experience/phases';
 import { DNA_TILT } from '@/particles/targets';
-import {
-  siAnthropic, siGooglegemini, siLangchain, siN8n, siHuggingface, siMeta,
-  siOpenjdk, siSupabase, siOllama, siFirebase, siFlutter, siKotlin,
-} from 'simple-icons';
+import { techByGroup } from '@/content/stack';
+import { TechMark } from './TechStack';
 
-// The AI platforms we build with — attached to the DNA, climbing it like
-// light from bottom to top. Hover scatters them; they snap back instantly.
-const ICONS = [
-  siAnthropic, siGooglegemini, siLangchain, siN8n, siHuggingface, siMeta,
-  siOpenjdk, siSupabase, siOllama, siFirebase, siFlutter, siKotlin,
-];
+// ACT 03 is SOFTWARE ENGINEERING — "we design scalable foundations, then write
+// the software strand by strand: web, mobile, SaaS and enterprise systems". So
+// the strand carries the BUILD stack, climbing it like light from bottom to top.
+// It used to carry AI platforms, which belong to the brain act and read as a
+// mismatch against this act's own copy.
+const ICONS = techByGroup('Frontend', 'Backend', 'Mobile');
 
 export default function DnaOrbit() {
   const root = useRef<HTMLDivElement>(null);
@@ -78,14 +76,11 @@ export default function DnaOrbit() {
 
   return (
     <div ref={root} className="orbit" aria-hidden>
-      {ICONS.map((icon) => (
-        <div key={icon.slug} className="orbit-item orbit-pinned">
+      {ICONS.map((tech) => (
+        <div key={tech.name} className="orbit-item orbit-pinned" style={{ ['--tech' as string]: `#${tech.hex}` }}>
           <span className="orbit-glow" />
-          <svg viewBox="0 0 24 24" role="img" aria-label={icon.title}
-            fill={icon.hex === '000000' ? '#E5E7EB' : `#${icon.hex}`}>
-            <path d={icon.path} />
-          </svg>
-          <span className="orbit-label">{icon.title}</span>
+          <TechMark tech={tech} />
+          <span className="orbit-label">{tech.name}</span>
         </div>
       ))}
     </div>

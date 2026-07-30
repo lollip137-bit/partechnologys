@@ -506,3 +506,132 @@ mark.legal-todo {
 /* the same for an industry card arrived at by anchor */
 .ind-card:target { border-color: rgba(0, 194, 255, 0.55); }
 @media (max-width: 700px) { .legal-wrap { max-width: none; } }
+
+/* ============ SERVICES: THE FULL CATALOGUE, VISIBLE ============
+   Everything was previously behind a closed <details>, so ~130 services were
+   invisible until clicked. Open by default, collapsible by choice. */
+.svc-index-sec { padding-top: 0; }
+.svc-index { display: flex; flex-wrap: wrap; gap: 8px; }
+.svc-index-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-radius: 999px;
+  border: 1px solid rgba(0, 194, 255, 0.16);
+  background: rgba(17, 30, 64, 0.4);
+  font-family: var(--font-sora), sans-serif;
+  font-size: 12.5px; font-weight: 600;
+  color: rgba(215, 232, 250, 0.82); text-decoration: none;
+  transition: border-color 0.3s var(--ease-lux), color 0.3s var(--ease-lux), transform 0.3s var(--ease-lux);
+}
+.svc-index-chip:hover { border-color: rgba(0, 194, 255, 0.5); color: #fff; transform: translateY(-2px); }
+.svc-index-n {
+  font-size: 10.5px; font-weight: 700;
+  color: var(--cyan); background: rgba(0, 194, 255, 0.12);
+  border-radius: 999px; padding: 2px 7px;
+}
+
+.svc-open-sec { display: block; }
+.svc-branch-head {
+  width: 100%; display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr auto auto;
+  align-items: center; gap: 18px;
+  padding: 20px 22px;
+  background: none; border: 0; cursor: pointer; text-align: left;
+  font: inherit; color: inherit;
+}
+.svc-branch-head:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
+.svc-branch-count {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: var(--cyan); background: rgba(0, 194, 255, 0.1);
+  border-radius: 999px; padding: 3px 9px;
+}
+.svc-chev {
+  width: 10px; height: 10px;
+  border-right: 2px solid rgba(0, 194, 255, 0.7);
+  border-bottom: 2px solid rgba(0, 194, 255, 0.7);
+  transform: rotate(45deg);
+  transition: transform 0.4s var(--ease-lux);
+}
+.svc-open-sec.is-open .svc-chev { transform: rotate(-135deg); }
+/* height animates without measuring anything in JS */
+.svc-open-sec .svc-leafs {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s var(--ease-lux);
+  padding: 0 22px;
+}
+.svc-open-sec.is-open .svc-leafs { grid-template-rows: 1fr; padding-bottom: 22px; }
+.svc-open-sec .svc-leafs > * { overflow: hidden; }
+.svc-leafs-inner { display: flex; flex-wrap: wrap; gap: 7px; }
+/* each service is now a real link into a pre-filled enquiry */
+a.svc-leaf {
+  display: inline-block; text-decoration: none;
+  transition: border-color 0.25s var(--ease-lux), color 0.25s var(--ease-lux), transform 0.25s var(--ease-lux);
+}
+a.svc-leaf:hover { border-color: rgba(0, 194, 255, 0.55); color: #fff; transform: translateY(-1px); }
+
+/* ============ TECH STACK ============ */
+.stack-groups { display: flex; flex-direction: column; gap: 30px; margin-top: 34px; }
+.stack-group-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.stack-group-name {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--cyan); margin: 0;
+}
+.stack-group-line { font-size: 13.5px; color: rgba(200, 218, 240, 0.55); }
+.stack-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.tech-tile {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 11px 16px 11px 13px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.022);
+  transition: transform 0.28s var(--ease-lux), border-color 0.28s var(--ease-lux), background 0.28s var(--ease-lux);
+}
+.tech-tile svg { flex: none; filter: saturate(0.85); transition: filter 0.28s var(--ease-lux); }
+.tech-tile:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tech) 55%, transparent);
+  background: color-mix(in srgb, var(--tech) 9%, transparent);
+}
+.tech-tile:hover svg { filter: saturate(1.25); }
+.tech-name {
+  font-family: var(--font-sora), sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: rgba(220, 234, 250, 0.8);
+  white-space: nowrap;
+}
+.tech-tile:hover .tech-name { color: #fff; }
+/* brands with no official vector ship as a lettermark, not a fake logo */
+.tech-letter {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; flex: none;
+  font-family: var(--font-sora), sans-serif; font-weight: 800;
+  letter-spacing: -0.02em;
+  border: 1.5px solid currentColor; border-radius: 7px;
+}
+
+/* ============ MOBILE PASS ============ */
+@media (max-width: 760px) {
+  /* Explicit areas. With the blurb spanning a full row, auto-placement pushed
+     the count onto a line of its own where it stretched across the whole card. */
+  .svc-branch-head {
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas: 'name count chev' 'blurb blurb blurb';
+    gap: 8px 12px; padding: 16px 16px;
+  }
+  .svc-branch-name { grid-area: name; }
+  .svc-branch-count { grid-area: count; justify-self: end; }
+  .svc-chev { grid-area: chev; align-self: center; }
+  .svc-branch-blurb { grid-area: blurb; font-size: 13px; }
+  .svc-open-sec .svc-leafs { padding: 0 16px; }
+  .svc-open-sec.is-open .svc-leafs { padding-bottom: 18px; }
+  .svc-index { gap: 6px; }
+  .svc-index-chip { font-size: 11.5px; padding: 8px 11px; }
+  .stack-groups { gap: 24px; }
+  .tech-tile { padding: 9px 13px 9px 10px; gap: 8px; }
+  .tech-name { font-size: 12px; }
+  .legal-notice { padding: 14px 16px; font-size: 13.5px; }
+  .legal-h { font-size: 17px; }
+  .legal-p, .legal-list { font-size: 14.5px; }
+  .footer-legal { font-size: 12px; gap: 8px 10px; }
+}

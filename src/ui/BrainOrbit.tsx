@@ -6,13 +6,12 @@ import { timeline, window01 } from '@/state/timeline';
 import { subscribe } from '@/state/ticker';
 import { viewport } from '@/state/viewport';
 import { STATION } from '@/experience/phases';
-import {
-  siPytorch, siTensorflow, siHuggingface, siScikitlearn,
-  siOpencv, siNvidia, siJupyter, siPandas,
-} from 'simple-icons';
+import { techByGroup } from '@/content/stack';
+import { TechMark } from './TechStack';
 
-// ACT 05 — the ML toolchain that engineers intelligence, orbiting the cortex.
-const ICONS = [siPytorch, siTensorflow, siHuggingface, siScikitlearn, siOpencv, siNvidia, siJupyter, siPandas];
+// ACT 04 — ARTIFICIAL INTELLIGENCE. The models, agents and vector stores that
+// engineer intelligence, orbiting the cortex.
+const ICONS = techByGroup('AI');
 
 export default function BrainOrbit() {
   const root = useRef<HTMLDivElement>(null);
@@ -68,14 +67,11 @@ export default function BrainOrbit() {
 
   return (
     <div ref={root} className="orbit" aria-hidden>
-      {ICONS.map((icon) => (
-        <div key={icon.slug} className="orbit-item orbit-pinned">
+      {ICONS.map((tech) => (
+        <div key={tech.name} className="orbit-item orbit-pinned" style={{ ['--tech' as string]: `#${tech.hex}` }}>
           <span className="orbit-glow" />
-          <svg viewBox="0 0 24 24" role="img" aria-label={icon.title}
-            fill={icon.hex === '000000' ? '#E5E7EB' : `#${icon.hex}`}>
-            <path d={icon.path} />
-          </svg>
-          <span className="orbit-label">{icon.title}</span>
+          <TechMark tech={tech} />
+          <span className="orbit-label">{tech.name}</span>
         </div>
       ))}
     </div>
