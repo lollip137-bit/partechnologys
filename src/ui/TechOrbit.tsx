@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { timeline, window01 } from '@/state/timeline';
 import { subscribe } from '@/state/ticker';
+import { viewport } from '@/state/viewport';
 import { networkAnchors } from '@/particles/targets';
 import {
   siReact, siNextdotjs, siNodedotjs, siPython, siTensorflow, siPytorch,
@@ -38,7 +39,7 @@ export default function TechOrbit() {
       el.style.visibility = o > 0.001 ? 'visible' : 'hidden';
       const cam = timeline.camera as THREE.PerspectiveCamera | null;
       if (o > 0.001 && cam) {
-        const w = window.innerWidth, h = window.innerHeight;
+        const w = viewport.w, h = viewport.h;
         for (let i = 0; i < items.length; i++) {
           const a = anchors[i % anchors.length];
           v.set(a[0], a[1], a[2]).project(cam);

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscribe } from '@/state/ticker';
+import { viewport } from '@/state/viewport';
 
 /**
  * On the film page there was no way out once you scrolled past the experience:
@@ -14,12 +15,10 @@ export function FilmBackToTop() {
 
   useEffect(() => {
     const el = btn.current!;
-    const film = document.getElementById('film');
     let shown = -1;
     return subscribe(() => {
-      const filmEnd = (film?.offsetHeight ?? 0) - window.innerHeight;
       // visible once the reader is a third of a screen into the website
-      const want = window.scrollY > filmEnd + window.innerHeight * 0.3 ? 1 : 0;
+      const want = viewport.scrollY > viewport.filmEnd + viewport.h * 0.3 ? 1 : 0;
       if (want !== shown) {
         shown = want;
         el.classList.toggle('on', want === 1);

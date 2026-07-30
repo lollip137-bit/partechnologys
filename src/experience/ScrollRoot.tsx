@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Lenis from 'lenis';
 import { timeline } from '@/state/timeline';
+import { initViewport, viewport } from '@/state/viewport';
 
 /**
  * Scroll IS time — but only across the film spacer (#film).
@@ -23,8 +24,8 @@ export default function ScrollRoot() {
 
     let mx = 0, my = 0, lastMx = 0, lastMy = 0;
     const onMouse = (e: MouseEvent) => {
-      mx = (e.clientX / window.innerWidth) * 2 - 1;
-      my = (e.clientY / window.innerHeight) * 2 - 1;
+      mx = (e.clientX / viewport.w) * 2 - 1;
+      my = (e.clientY / viewport.h) * 2 - 1;
     };
     const onDown = () => {
       timeline.clickAt = performance.now() / 1000;
@@ -32,14 +33,17 @@ export default function ScrollRoot() {
     window.addEventListener('mousemove', onMouse, { passive: true });
     window.addEventListener('pointerdown', onDown, { passive: true });
 
-    const film = document.getElementById('film');
+    const teardownViewport = initViewport();
+
     let raf = 0;
     let lastScroll = 0;
     const loop = (time: number) => {
       lenis.raf(time);
-      const filmLen = Math.max(1, (film?.offsetHeight ?? document.documentElement.scrollHeight) - window.innerHeight);
-      timeline.progress = Math.min(1, Math.max(0, lenis.scroll / filmLen));
-      const v = (lenis.scroll - lastScroll) / Math.max(1, window.innerHeight);
+      // Publish the scroll offset ONCE per frame, from Lenis's own value, so no
+      // other per-frame callback has to touch window.scrollY or offsetHeight.
+      viewport.scrollY = lenis.scroll;
+      timeline.progress = Math.min(1, Math.max(0, lenis.scroll / viewport.filmLen));
+      const v = (lenis.scroll - lastScroll) / Math.max(1, viewport.h);
       lastScroll = lenis.scroll;
       timeline.velocity += (v * 60 - timeline.velocity) * 0.1;
       // eased mouse + cursor speed (drives particle repulsion)
@@ -57,6 +61,7 @@ export default function ScrollRoot() {
       cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', onMouse);
       window.removeEventListener('pointerdown', onDown);
+      teardownViewport();
       lenis.destroy();
     };
   }, []);

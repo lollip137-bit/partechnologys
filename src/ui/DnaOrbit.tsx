@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { timeline, window01 } from '@/state/timeline';
 import { subscribe } from '@/state/ticker';
+import { viewport } from '@/state/viewport';
 import { STATION } from '@/experience/phases';
 import { DNA_TILT } from '@/particles/targets';
 import {
@@ -40,7 +41,7 @@ export default function DnaOrbit() {
       el.style.visibility = o > 0.001 ? 'visible' : 'hidden';
       const cam = timeline.camera as THREE.PerspectiveCamera | null;
       if (o > 0.001 && cam) {
-        const w = window.innerWidth, h = window.innerHeight;
+        const w = viewport.w, h = viewport.h;
         for (let i = 0; i < items.length; i++) {
           // climb the helix: bottom → top, forever
           const s = ((i / items.length) + t * 0.045) % 1;

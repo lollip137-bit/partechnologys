@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import ParticleEngine from '@/particles/ParticleEngine';
+import { subscribe } from '@/state/ticker';
+import { viewport } from '@/state/viewport';
 import CameraRig from './CameraRig';
 import Cosmos from './Cosmos';
 import PostFX from './PostFX';
@@ -12,35 +14,29 @@ function FrameloopGovernor() {
   const set = useThree((s) => s.set);
   const frameloop = useRef<'always' | 'never'>('always');
   useEffect(() => {
-    const film = document.getElementById('film');
-    let raf = 0;
-    const loop = () => {
-      const filmEnd = (film?.offsetHeight ?? Infinity) - window.innerHeight;
-      const over = window.scrollY - filmEnd;
-      // sleep when the reader is in the site sections OR the tab is hidden
-      const asleep = document.hidden || over > window.innerHeight * 0.6;
-      const want: 'always' | 'never' = asleep ? 'never' : 'always';
+    // Runs on the shared ticker rather than a third private rAF loop, and reads
+    // the cached viewport instead of forcing a layout flush every frame.
+    const asleepNow = () =>
+      document.hidden || viewport.scrollY - viewport.filmEnd > viewport.h * 0.6;
+
+    const stop = subscribe(() => {
+      const want: 'always' | 'never' = asleepNow() ? 'never' : 'always';
       if (want !== frameloop.current) {
         frameloop.current = want;
         set({ frameloop: want });
       }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
+    });
 
     // wake immediately when the tab comes back
     const onVis = () => {
-      if (!document.hidden && frameloop.current === 'never') {
-        const filmEnd = (film?.offsetHeight ?? Infinity) - window.innerHeight;
-        if (window.scrollY - filmEnd <= window.innerHeight * 0.6) {
-          frameloop.current = 'always';
-          set({ frameloop: 'always' });
-        }
+      if (!document.hidden && frameloop.current === 'never' && !asleepNow()) {
+        frameloop.current = 'always';
+        set({ frameloop: 'always' });
       }
     };
     document.addEventListener('visibilitychange', onVis);
     return () => {
-      cancelAnimationFrame(raf);
+      stop();
       document.removeEventListener('visibilitychange', onVis);
     };
   }, [set]);

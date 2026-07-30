@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { timeline, smoothstep } from '@/state/timeline';
 import { subscribe } from '@/state/ticker';
+import { viewport } from '@/state/viewport';
 
 /** ACT 11 — the world becomes still. */
 export default function Finale() {
@@ -11,13 +12,11 @@ export default function Finale() {
 
   useEffect(() => {
     const el = root.current!;
-    const film = document.getElementById('film');
     return subscribe(() => {
       const p = timeline.progress;
       // fade the hero away as the real website scrolls over it
-      const filmEnd = (film?.offsetHeight ?? 0) - window.innerHeight;
-      const over = Math.max(0, window.scrollY - filmEnd);
-      const site = Math.max(0, 1 - over / (window.innerHeight * 0.45));
+      const over = Math.max(0, viewport.scrollY - viewport.filmEnd);
+      const site = Math.max(0, 1 - over / (viewport.h * 0.45));
       const head = smoothstep(0.94, 0.962, p) * site;
       const sub = smoothstep(0.955, 0.978, p) * site;
       const cta = smoothstep(0.968, 0.992, p) * site;

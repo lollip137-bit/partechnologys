@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { timeline, window01 } from '@/state/timeline';
 import { subscribe } from '@/state/ticker';
+import { viewport } from '@/state/viewport';
 import { STATION } from '@/experience/phases';
 import {
   siPytorch, siTensorflow, siHuggingface, siScikitlearn,
@@ -33,7 +34,7 @@ export default function BrainOrbit() {
       el.style.visibility = o > 0.001 ? 'visible' : 'hidden';
       const cam = timeline.camera as THREE.PerspectiveCamera | null;
       if (o > 0.001 && cam) {
-        const w = window.innerWidth, h = window.innerHeight;
+        const w = viewport.w, h = viewport.h;
         // anchor to the specimen, then ring it in SCREEN space so the logos
         // always frame the cortex instead of drifting across it
         v.set(0, 0.5, STATION.brain).project(cam);
