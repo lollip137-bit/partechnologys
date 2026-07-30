@@ -58,6 +58,8 @@ jobs:
 
       - name: Build static site (-> ./out)
         run: npm run build
+        env:
+          NEXT_PUBLIC_CHAT_API: ${{ vars.NEXT_PUBLIC_CHAT_API }}
 
       - name: Add server config
         run: cp deploy/.htaccess out/.htaccess
