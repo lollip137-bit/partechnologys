@@ -141,8 +141,10 @@ export function MascotModel() {
       s.state === "thinking";
     const active = !reduced && !noFollow;
     const desiredYaw = active ? THREE.MathUtils.clamp(tx * LOOK_CLAMP, -LOOK_CLAMP, LOOK_CLAMP) : 0;
+    // Cursor near the top of the screen (ty ≈ -1) should tip the head UP, and
+    // the bottom should tip it DOWN. The previous negation inverted this.
     const desiredPitch = active
-      ? THREE.MathUtils.clamp(-ty * LOOK_CLAMP * 0.7, -LOOK_CLAMP, LOOK_CLAMP)
+      ? THREE.MathUtils.clamp(ty * LOOK_CLAMP * 0.7, -LOOK_CLAMP, LOOK_CLAMP)
       : 0;
     // lerp, never instant
     look.current.yaw += (desiredYaw - look.current.yaw) * LOOK_LERP;
