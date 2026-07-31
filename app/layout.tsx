@@ -56,7 +56,12 @@ export const metadata: Metadata = {
     googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 },
   },
   icons: {
-    icon: [{ url: '/icon.png', type: 'image/png' }],
+    // Theme-aware favicon: dark chat bubble on light tabs, white bubble on dark
+    // tabs. Browsers pick the icon whose media query matches the tab's scheme.
+    icon: [
+      { url: '/icon-light.png', type: 'image/png', media: '(prefers-color-scheme: light)' },
+      { url: '/icon-dark.png', type: 'image/png', media: '(prefers-color-scheme: dark)' },
+    ],
     apple: [{ url: '/brand/par-icon.png' }],
   },
   category: 'technology',
