@@ -124,11 +124,22 @@ export function MascotModel() {
       tx = s.lookTarget.x;
       ty = s.lookTarget.y;
     }
-    const active =
-      s.state === "tracking" ||
-      s.state === "curious" ||
-      s.state === "anticipating" ||
-      s.state === "excited";
+    // Head follows the cursor in every awake pose — even idle — so Drax keeps
+    // looking wherever the mouse is instead of re-centering when it stops.
+    // Suppressed only where the head is busy with something else: being carried,
+    // asleep, mid-portal, huffing, or celebrating.
+    const noFollow =
+      s.state === "boot" ||
+      s.state === "arriving" ||
+      s.state === "hiding" ||
+      s.state === "peeking" ||
+      s.state === "dragging" ||
+      s.state === "asleep" ||
+      s.state === "sleepy" ||
+      s.state === "annoyed" ||
+      s.state === "celebrate" ||
+      s.state === "thinking";
+    const active = !reduced && !noFollow;
     const desiredYaw = active ? THREE.MathUtils.clamp(tx * LOOK_CLAMP, -LOOK_CLAMP, LOOK_CLAMP) : 0;
     const desiredPitch = active
       ? THREE.MathUtils.clamp(-ty * LOOK_CLAMP * 0.7, -LOOK_CLAMP, LOOK_CLAMP)
