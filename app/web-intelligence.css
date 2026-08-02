@@ -1,0 +1,247 @@
+/* ============================================================
+   PAR WEB INTELLIGENCE — home promo banner + /web-intelligence/
+   Follows the measured-perf rules: animate transform/opacity
+   only; every continuous animation is also stopped explicitly
+   under prefers-reduced-motion (in addition to the global kill
+   in library.css, so this file stands on its own).
+   ============================================================ */
+
+/* ---------- shared: the product banner ---------- */
+.wi-banner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  gap: 44px;
+  align-items: center;
+  border-radius: 26px;
+  padding: 48px 50px;
+  background: linear-gradient(160deg, rgba(17, 30, 64, 0.55), rgba(10, 15, 29, 0.62));
+  border: 1px solid rgba(0, 194, 255, 0.18);
+  box-shadow: inset 0 1px 0 rgba(229, 231, 235, 0.08), 0 30px 80px rgba(0, 2, 10, 0.5);
+  overflow: hidden;
+}
+/* ambient glow pooling behind the lockup */
+.wi-banner::before {
+  content: '';
+  position: absolute; right: -140px; top: -140px;
+  width: 460px; height: 460px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 194, 255, 0.13), transparent 70%);
+  pointer-events: none;
+}
+
+/* the audit beam — a thin scanline sweeping the card, the way the
+   tool sweeps a page. Full-height layer, band drawn by gradient,
+   moved with transform only. */
+.wi-scan {
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+}
+.wi-scan::after {
+  content: '';
+  position: absolute; inset: -1px;
+  background: linear-gradient(
+    180deg,
+    transparent 46%,
+    rgba(0, 194, 255, 0.1) 49%,
+    rgba(0, 194, 255, 0.4) 50%,
+    rgba(0, 194, 255, 0.1) 51%,
+    transparent 54%
+  );
+  transform: translateY(-100%);
+  animation: wi-scan-sweep 7s linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes wi-scan-sweep {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  12%  { opacity: 0.9; }
+  62%  { opacity: 0.9; }
+  74%, 100% { transform: translateY(100%); opacity: 0; }
+}
+
+.wi-copy { position: relative; z-index: 1; }
+.wi-title { margin-bottom: 16px; }
+.wi-line {
+  max-width: 52ch;
+  font-size: 14.5px; font-weight: 300; line-height: 1.7;
+  color: var(--muted);
+}
+.wi-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.wi-actions {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  margin-top: 30px;
+}
+.wi-note {
+  font-size: 12px; font-weight: 400; letter-spacing: 0.04em;
+  color: rgba(229, 231, 235, 0.5);
+}
+
+.wi-logo-wrap {
+  position: relative; z-index: 1;
+  display: flex; justify-content: center;
+}
+.wi-logo {
+  width: 100%; max-width: 430px; height: auto;
+  filter: drop-shadow(0 14px 40px rgba(0, 2, 10, 0.65)) drop-shadow(0 0 34px rgba(0, 194, 255, 0.14));
+}
+
+/* ---------- the animated CTA ---------- */
+.wi-cta {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: var(--font-sora), sans-serif;
+  font-weight: 600; font-size: 14px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: #04122b;
+  background: linear-gradient(135deg, #00C2FF, var(--blue));
+  padding: 17px 34px;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 0 40px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.18s ease-out, box-shadow 0.4s var(--ease-lux);
+}
+.wi-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 70px rgba(37, 99, 235, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.wi-cta:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+/* breathing halo — a blurred layer behind the pill, opacity/scale only */
+.wi-cta::before {
+  content: '';
+  position: absolute; inset: -7px;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, rgba(0, 194, 255, 0.5), transparent);
+  filter: blur(14px);
+  z-index: -1;
+  opacity: 0.35;
+  transform: scale(0.97);
+  animation: wi-halo 3.2s ease-in-out infinite;
+  will-change: opacity, transform;
+  pointer-events: none;
+}
+@keyframes wi-halo {
+  0%, 100% { opacity: 0.3; transform: scale(0.97); }
+  50% { opacity: 0.75; transform: scale(1.04); }
+}
+/* light sweep across the face of the button */
+.wi-cta-sheen {
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wi-cta-sheen::after {
+  content: '';
+  position: absolute; top: -40%; bottom: -40%; left: 0;
+  width: 34%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: translateX(-140%) skewX(-18deg);
+  animation: wi-sheen 3.2s var(--ease-lux) infinite;
+  will-change: transform;
+}
+@keyframes wi-sheen {
+  0%, 52% { transform: translateX(-140%) skewX(-18deg); }
+  88%, 100% { transform: translateX(430%) skewX(-18deg); }
+}
+.wi-cta-arrow {
+  display: inline-block;
+  transition: transform 0.3s var(--ease-lux);
+}
+.wi-cta:hover .wi-cta-arrow,
+.wi-cta:focus-visible .wi-cta-arrow { transform: translateX(5px); }
+
+/* ---------- page: fact strip ---------- */
+.wi-facts {
+  display: flex; flex-wrap: wrap; gap: 10px 26px;
+  margin-top: 26px;
+  padding: 0; list-style: none;
+}
+.wi-facts li {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 11.5px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(229, 231, 235, 0.75);
+}
+.wi-facts li::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px 2px rgba(0, 194, 255, 0.4);
+}
+
+/* ---------- page: the seven areas ---------- */
+.wi-area-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+/* ---------- page: deliverables ---------- */
+.wi-get-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.wi-get-card {
+  position: relative;
+  border-radius: 22px;
+  padding: 30px 28px 32px;
+  background: linear-gradient(160deg, rgba(17, 30, 64, 0.5), rgba(10, 15, 29, 0.55));
+  border: 1px solid rgba(0, 194, 255, 0.12);
+  overflow: hidden;
+  transition: border-color 0.35s var(--ease-lux), box-shadow 0.35s var(--ease-lux);
+}
+.wi-get-card:hover {
+  border-color: rgba(0, 194, 255, 0.4);
+  box-shadow: 0 24px 60px rgba(0, 2, 10, 0.55);
+}
+.wi-get-num {
+  font-family: var(--font-sora), sans-serif;
+  font-weight: 800; font-size: 13px; letter-spacing: 0.2em;
+  color: var(--cyan);
+}
+.wi-get-name {
+  font-family: var(--font-sora), sans-serif;
+  font-weight: 700; font-size: 20px; color: var(--ink);
+  margin: 10px 0;
+}
+.wi-get-line { font-size: 13.5px; font-weight: 300; line-height: 1.65; color: var(--muted); max-width: 52ch; }
+
+/* the honesty line — what the product deliberately does NOT claim */
+.wi-honest {
+  margin-top: 26px;
+  font-size: 13.5px; font-weight: 300; line-height: 1.7;
+  color: rgba(210, 225, 245, 0.62);
+  max-width: 70ch;
+}
+.wi-honest strong { font-weight: 600; color: rgba(229, 231, 235, 0.85); }
+.wi-honest-link { color: var(--cyan); text-decoration: none; }
+.wi-honest-link:hover { text-decoration: underline; }
+.wi-honest-link:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 4px; }
+
+/* ---------- page: how it runs ---------- */
+.wi-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+/* ---------- reduced motion: every continuous animation stops ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .wi-scan::after,
+  .wi-cta::before,
+  .wi-cta-sheen::after { animation: none; }
+  .wi-scan { display: none; }
+  .wi-cta, .wi-cta-arrow { transition: none; }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1024px) {
+  .wi-area-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .wi-banner {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 34px 26px 38px;
+  }
+  /* the lockup leads on small screens; copy follows */
+  .wi-logo-wrap { order: -1; }
+  .wi-logo { max-width: 330px; }
+  .wi-get-grid, .wi-steps { grid-template-columns: 1fr; }
+}
+@media (max-width: 700px) {
+  .wi-area-grid { grid-template-columns: 1fr; }
+  .wi-actions { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .wi-facts { gap: 10px 18px; }
+}

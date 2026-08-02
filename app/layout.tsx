@@ -8,6 +8,7 @@ import './phase7.css';
 import './library.css';
 import './inner.css';
 import './services.css';
+import './web-intelligence.css';
 import { SITE } from '@/content/seo';
 import { MascotMount } from '@/mascot/MascotMount';
 

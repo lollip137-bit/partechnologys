@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { STATS, SERVICES, PROCESS, PROJECTS, FAQS, INDUSTRY_CARDS, ENGAGEMENT, INSIGHTS } from '@/content/site';
+import { WI_AREAS } from '@/content/web-intelligence';
 import { ProjectWindow, ProjectModal, useProjectPreview } from './Projects';
 import Flow, { ArtCard } from './Flow';
 import SocialWheel from './Social';
@@ -208,6 +209,49 @@ export default function Sections() {
                 <p className="eng-line">{model.line}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PAR Web Intelligence — the free live audit */}
+      <section className="sec" id="web-intelligence-sec" aria-labelledby="wi-home-title">
+        <div className="wrap">
+          <div className="wi-banner" data-a>
+            <span className="wi-scan" aria-hidden />
+            <div className="wi-copy">
+              <div className="sec-kicker">PAR WEB INTELLIGENCE</div>
+              <h2 className="sec-title wi-title" id="wi-home-title">
+                Find out what your website is really doing.
+              </h2>
+              <p className="wi-line">
+                Our audit engine reads your live pages and reports what is holding them back —
+                every finding measured on your real site, with the evidence to prove it.
+                It costs nothing to run, and nothing you enter is stored.
+              </p>
+              <div className="wi-chips">
+                {WI_AREAS.map((a) => (
+                  <span key={a.name} className="act-chip">{a.name}</span>
+                ))}
+              </div>
+              <div className="wi-actions">
+                <Link href="/web-intelligence/" className="wi-cta">
+                  <span className="wi-cta-sheen" aria-hidden />
+                  Get your free audit
+                  <span className="wi-cta-arrow" aria-hidden>→</span>
+                </Link>
+                <span className="wi-note">Free · no signup · nothing stored</span>
+              </div>
+            </div>
+            <div className="wi-logo-wrap">
+              <img
+                className="wi-logo"
+                src="/brand/par-web-intelligence.png"
+                alt="PAR Web Intelligence — website audit tool"
+                width={1680}
+                height={644}
+                loading="lazy"
+              />
+            </div>
           </div>
         </div>
       </section>

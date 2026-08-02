@@ -51,6 +51,7 @@ export const ROUTES: { path: string; priority: number; changeFrequency: 'daily' 
   { path: '/library', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/library/mockups', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/pricing', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/web-intelligence', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/insights', priority: 0.6, changeFrequency: 'weekly' },
   { path: '/about', priority: 0.7, changeFrequency: 'monthly' },
   { path: '/careers', priority: 0.6, changeFrequency: 'monthly' },
